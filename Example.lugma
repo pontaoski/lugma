@@ -4,6 +4,7 @@ struct Message {
 }
 
 enum Error {
+  case Gay
   case NoPermissions(
     needed: String
   )
