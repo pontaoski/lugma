@@ -1,0 +1,16 @@
+struct Message {
+  let id: UInt64
+  let optionalField: String?
+}
+
+enum Error {
+  case NoPermissions(
+    needed: String
+  )
+}
+
+protocol Chat {
+  func SendMessage(message: Message, message: Message) throws Error
+
+  event MessageReceived(message: Message)
+}
