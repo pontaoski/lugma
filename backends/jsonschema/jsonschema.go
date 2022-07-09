@@ -155,6 +155,18 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) err
 			}
 		}
 	}
+	for _, flagset := range mod.Flagsets {
+		loc := j.URLBase + flagset.Path().ModulePath + flagset.Path().InModulePath
+		pattern := `^[TF]*$`
+		if flagset.Optional {
+			pattern = `^[TF_]*$`
+		}
+		schemas[loc] = AnyDict{
+			"$id":     loc,
+			"type":    "string",
+			"pattern": pattern,
+		}
+	}
 
 	data, err := json.MarshalIndent(AnyDict{
 		"$id":     j.URLBase + module,

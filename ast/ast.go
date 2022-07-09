@@ -19,6 +19,7 @@ type File struct {
 	Protocols []Protocol
 	Structs   []Struct
 	Enums     []Enum
+	Flagsets  []Flagset
 	Span      Span
 }
 
@@ -36,6 +37,8 @@ func FileFromNode(n *sitter.Node, input []byte) File {
 			f.Structs = append(f.Structs, StructFromNode(child, input))
 		case "enum_declaration":
 			f.Enums = append(f.Enums, EnumFromNode(child, input))
+		case "flagset_declaration":
+			f.Flagsets = append(f.Flagsets, FlagsetFromNode(child, input))
 		default:
 			panic("Unhandled " + child.Type())
 		}
@@ -266,6 +269,45 @@ func CaseFromNode(n *sitter.Node, input []byte) Case {
 	}
 
 	return c
+}
+
+type Flagset struct {
+	Name string
+
+	Optional bool
+	Flags    []Flag
+
+	Span Span
+}
+
+type Flag struct {
+	Name string
+
+	Span Span
+}
+
+func FlagsetFromNode(n *sitter.Node, input []byte) Flagset {
+	var f Flagset
+	f.Name = n.ChildByFieldName("name").Content(input)
+	f.Span = SpanFromNode(n)
+
+	if n.ChildByFieldName("optional") != nil {
+		f.Optional = true
+	}
+
+	for i := 0; i < int(n.NamedChildCount()); i++ {
+		child := n.NamedChild(i)
+		switch child.Type() {
+		case "identifier", "optional":
+			continue
+		case "flag_declaration":
+			f.Flags = append(f.Flags, Flag{child.ChildByFieldName("name").Content(input), SpanFromNode(child)})
+		default:
+			panic("Unhandled node " + child.Type())
+		}
+	}
+
+	return f
 }
 
 type Type interface {

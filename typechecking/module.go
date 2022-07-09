@@ -6,6 +6,7 @@ type Module struct {
 	Structs   []Struct
 	Enums     []Enum
 	Protocols []Protocol
+	Flagsets  []Flagset
 }
 
 var _ Object = Module{}
@@ -28,6 +29,11 @@ func (m Module) Child(name string) Object {
 	for _, protocol := range m.Protocols {
 		if protocol.Name == name {
 			return protocol
+		}
+	}
+	for _, flagset := range m.Flagsets {
+		if flagset.Name == name {
+			return flagset
 		}
 	}
 	return nil

@@ -221,6 +221,22 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 		m.Enums = append(m.Enums, e)
 		ctx.Environment.Items[item.Name] = e
 	}
+	for _, item := range tree.Flagsets {
+		var fs Flagset
+		fs.Name = item.Name
+		fs.Optional = item.Optional
+		fs.DefinedAt = m.DefinedAt.Appended(item.Name)
+
+		for _, flag := range item.Flags {
+			var f Flag
+			f.Name = flag.Name
+
+			fs.Flags = append(fs.Flags, f)
+		}
+
+		m.Flagsets = append(m.Flagsets, fs)
+		ctx.Environment.Items[item.Name] = fs
+	}
 	for _, item := range tree.Protocols {
 		var p Protocol
 		p.Name = item.Name

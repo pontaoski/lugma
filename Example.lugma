@@ -10,6 +10,16 @@ enum Error {
   )
 }
 
+flagset Permissions {
+  flag CanRead
+  flag CanChat
+}
+
+flagset Overrides: optional {
+  flag CanRead
+  flag CanChat
+}
+
 protocol Chat {
   func SendMessage(message: Message, message: Message) throws Error
 
