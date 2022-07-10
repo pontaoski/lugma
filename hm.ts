@@ -9,7 +9,7 @@ export type Error =
 export type Permissions = string
 export type Overrides = string
 export interface ChatRequests<T> {
-	SubscribeToEvents(): ChatStream
+	SubscribeToEvents(extra: T | undefined): Promise<ChatStream>
 	SendMessage(message: Message, homosexuality: Message, extra: T): Promise<void>
 }
 export interface ChatStream extends Stream {
@@ -27,9 +27,9 @@ export function makeChatFromTransport<T>(transport: Transport<T>): ChatRequests<
 				extra,
 			)
 		},
-		SubscribeToEvents(): ChatStream {
+		async SubscribeToEvents(extra: T | undefined): Promise<ChatStream> {
 			return Object.create(
-				transport.openStream("Example.lugma/Chat"),
+				transport.openStream("Example.lugma/Chat", extra),
 				{
 					onMessageReceived: {
 						value: function(callback: (message: Message) => void): number {

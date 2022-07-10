@@ -1,6 +1,6 @@
 export interface Transport<T> {
     makeRequest(endpoint: string, body: any, extra: T | undefined): Promise<any>
-    openStream(endpoint: string): Stream
+    openStream(endpoint: string, extra: T | undefined): Promise<Stream>
 }
 export interface Stream {
     unon(item: number): void
@@ -15,7 +15,7 @@ export class WebSocketStream implements Stream {
     numbersToEvents: Map<number, string>
     callbackNumber: number
 
-    constructor(url: URL) {
+    constructor(url: URL, initialPayload: any) {
         this.socket = new WebSocket(url)
         this.socket.binaryType = "arraybuffer"
         this.callbacks = new Map()
@@ -23,6 +23,9 @@ export class WebSocketStream implements Stream {
         this.numbersToEvents = new Map()
         this.callbackNumber = 0
 
+        this.socket.addEventListener("open", () => {
+            this.socket.send(JSON.stringify(initialPayload))
+        })
         this.socket.addEventListener("close", () => {
             const values = this.eventsToNumbers.get("on closed")?.values()
             if (values == undefined) {
@@ -108,8 +111,18 @@ export class HTTPSTransport implements Transport<Headers> {
             throw json
         }
     }
-    openStream(endpoint: string): Stream {
+    async openStream(endpoint: string, extra: Headers | undefined): Promise<Stream> {
         const path = new URL(endpoint, this.baseURL)
-        return new WebSocketStream(path)
+
+        const response = await fetch(new URL("!ticket", path).toString(), {
+            method: 'POST',
+            headers: extra
+        })
+        if (response.status !== 200) {
+            throw response
+        }
+        const json = await response.json()
+
+        return new WebSocketStream(new URL("!events", path), json)
     }
 }

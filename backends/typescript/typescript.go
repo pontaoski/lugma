@@ -79,7 +79,7 @@ func (ts TypescriptBackend) Generate(module string, in *typechecking.Context) er
 	for _, protocol := range mod.Protocols {
 		build.AddI(`export interface %sRequests<T> {`, protocol.Name)
 		if len(protocol.Events) > 0 {
-			build.Add(`SubscribeToEvents(): %sStream`, protocol.Name)
+			build.Add(`SubscribeToEvents(extra: T | undefined): Promise<%sStream>`, protocol.Name)
 		}
 		for _, fn := range protocol.Funcs {
 			build.AddE(`%s(`, fn.Name)
@@ -150,9 +150,9 @@ func (ts TypescriptBackend) Generate(module string, in *typechecking.Context) er
 		}
 
 		if len(protocol.Events) > 0 {
-			build.AddI(`SubscribeToEvents(): %sStream {`, protocol.Name)
+			build.AddI(`async SubscribeToEvents(extra: T | undefined): Promise<%sStream> {`, protocol.Name)
 			build.AddI(`return Object.create(`)
-			build.Add(`transport.openStream("%s"),`, protocol.Path().String())
+			build.Add(`transport.openStream("%s", extra),`, protocol.Path().String())
 			build.AddI(`{`)
 
 			for _, ev := range protocol.Events {
