@@ -28,7 +28,7 @@ func (e Enum) Keyable() bool {
 	return false
 }
 func (e Enum) String() string {
-	return fmt.Sprintf("struct %s", e.Name)
+	return fmt.Sprintf("%s", e.Name)
 }
 
 type Case struct {

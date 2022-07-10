@@ -1,0 +1,15 @@
+{
+	"name": "lugma-web-helpers",
+	"version": "1.0.0",
+	"description": "",
+	"main": "dist/index.js",
+	"scripts": {
+		"build": "esbuild --bundle src/index.ts --outfile=dist/index.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"esbuild": "^0.14.48"
+	}
+}

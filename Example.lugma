@@ -21,7 +21,7 @@ flagset Overrides: optional {
 }
 
 protocol Chat {
-  func SendMessage(message: Message, message: Message) throws Error
+  func SendMessage(message: Message, homosexuality: Message) throws Error
 
   event MessageReceived(message: Message)
 }

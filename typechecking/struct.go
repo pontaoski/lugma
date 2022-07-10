@@ -28,7 +28,7 @@ func (s Struct) Keyable() bool {
 	return false
 }
 func (s Struct) String() string {
-	return fmt.Sprintf("struct %s", s.Name)
+	return fmt.Sprintf("%s", s.Name)
 }
 
 type Field struct {

@@ -206,7 +206,7 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 
 		for _, cas := range item.Cases {
 			var c Case
-			c.Name = item.Name
+			c.Name = cas.Name
 			c.DefinedAt = e.DefinedAt.Appended(cas.Name)
 
 			args, err := argList(cas.Values, c.DefinedAt, ctx)
