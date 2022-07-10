@@ -152,7 +152,7 @@ func (ts TypescriptBackend) Generate(module string, in *typechecking.Context) er
 		if len(protocol.Events) > 0 {
 			build.AddI(`SubscribeToEvents(): %sStream {`, protocol.Name)
 			build.AddI(`return Object.create(`)
-			build.Add(`transport.openStream(),`)
+			build.Add(`transport.openStream("%s"),`, protocol.Path().String())
 			build.AddI(`{`)
 
 			for _, ev := range protocol.Events {

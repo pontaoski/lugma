@@ -1,10 +1,14 @@
 {
 	"compilerOptions": {
-		"target": "ES5",
+		"target": "ES6",
 		"strict": true,
 		"moduleResolution": "node",
 		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true
+		"forceConsistentCasingInFileNames": true,
+		"lib": ["es2015", "WebWorker"],
+		"downlevelIteration": true,
+		"declaration": true,
+		"declarationDir": "dist"
 	},
 	"include": ["src/**/*"]
 }
