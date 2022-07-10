@@ -78,8 +78,9 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) err
 	for _, enum := range mod.Enums {
 		oneOfs := []interface{}{}
 
+		simple := enum.Simple()
 		for _, esac := range enum.Cases {
-			if len(esac.Fields) == 0 {
+			if simple {
 				oneOfs = append(oneOfs, AnyDict{"type": "string", "const": esac.Name})
 			} else {
 				props := map[string]AnyDict{}

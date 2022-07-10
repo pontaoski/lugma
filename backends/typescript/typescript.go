@@ -55,8 +55,9 @@ func (ts TypescriptBackend) Generate(module string, in *typechecking.Context) er
 	}
 	for _, item := range mod.Enums {
 		build.AddI("export type %s =", item.Name)
+		simple := item.Simple()
 		for idx, esac := range item.Cases {
-			if len(esac.Fields) == 0 {
+			if simple {
 				build.Add(`"%s" |`, esac.Name)
 			} else {
 				build.AddE(`{ %s: {`, esac.Name)

@@ -30,6 +30,14 @@ func (e Enum) Keyable() bool {
 func (e Enum) String() string {
 	return fmt.Sprintf("%s", e.Name)
 }
+func (e Enum) Simple() bool {
+	for _, esac := range e.Cases {
+		if len(esac.Fields) > 0 {
+			return false
+		}
+	}
+	return true
+}
 
 type Case struct {
 	Name      string

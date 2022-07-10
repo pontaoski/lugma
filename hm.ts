@@ -4,7 +4,7 @@ export interface Message {
 	optionalField: (string|null|undefined)
 }
 export type Error =
-	"Gay" |
+	{ Gay: {} } |
 	{ NoPermissions: {needed: string;} }
 export type Permissions = string
 export type Overrides = string
