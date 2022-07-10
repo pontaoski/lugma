@@ -1,6 +1,6 @@
 export interface Transport<T> {
     makeRequest(endpoint: string, body: any, extra: T | undefined): Promise<any>
-    openStream(endpoint: string, extra: T | undefined): Promise<Stream>
+    openStream(endpoint: string, extra: T | undefined): Stream
 }
 export interface Stream {
     unon(item: number): void
@@ -97,7 +97,7 @@ export class HTTPSTransport implements Transport<Headers> {
             'Content-Type': 'application/json'
         }
         extra?.forEach((val, key) => {
-            headers[val] = key
+            headers[key] = val
         })
         const response = await fetch(path.toString(), {
             method: 'POST',
@@ -111,18 +111,14 @@ export class HTTPSTransport implements Transport<Headers> {
             throw json
         }
     }
-    async openStream(endpoint: string, extra: Headers | undefined): Promise<Stream> {
+    openStream(endpoint: string, extra: Headers | undefined): Stream {
         const path = new URL(endpoint, this.baseURL)
 
-        const response = await fetch(new URL("!ticket", path).toString(), {
-            method: 'POST',
-            headers: extra
+        const headers: {[key: string]: string} = {}
+        extra?.forEach((val, key) => {
+            headers[key] = val
         })
-        if (response.status !== 200) {
-            throw response
-        }
-        const json = await response.json()
 
-        return new WebSocketStream(new URL("!events", path), json)
+        return new WebSocketStream(path, headers)
     }
 }
