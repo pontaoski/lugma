@@ -2,8 +2,12 @@ package typescript
 
 import (
 	"fmt"
+	"io/fs"
+	"io/ioutil"
 	"lugmac/backends"
 	"lugmac/typechecking"
+
+	"github.com/urfave/cli/v2"
 )
 
 type TypescriptBackend struct {
@@ -40,7 +44,44 @@ func (ts TypescriptBackend) TSTypeOf(lugma typechecking.Type, module string, in 
 	}
 }
 
-func (ts TypescriptBackend) Generate(module string, in *typechecking.Context) error {
+func init() {
+	backends.RegisterBackend(TypescriptBackend{})
+}
+
+func (ts TypescriptBackend) GenerateCommand() *cli.Command {
+	return &cli.Command{
+		Name:    "typescript",
+		Aliases: []string{"ts"},
+		Usage:   "Generate TypeScript modules for Lugma",
+		Flags:   backends.StandardFlags,
+		Action: func(cCtx *cli.Context) error {
+			output := cCtx.String("output")
+
+			ctx := typechecking.NewContext()
+			err := ctx.MakeModule(cCtx.Args().First())
+			if err != nil {
+				return err
+			}
+
+			var result string
+
+			result, err = ts.Generate(cCtx.Args().First(), ctx)
+			if err != nil {
+				return err
+			}
+
+			if output == "" {
+				println(result)
+			} else {
+				ioutil.WriteFile(output, []byte(result), fs.ModePerm)
+			}
+
+			return nil
+		},
+	}
+}
+
+func (ts TypescriptBackend) Generate(module string, in *typechecking.Context) (string, error) {
 	build := backends.Filebuilder{}
 	mod := in.KnownModules[module]
 
@@ -184,7 +225,5 @@ func (ts TypescriptBackend) Generate(module string, in *typechecking.Context) er
 		build.AddD(`}`)
 	}
 
-	print(build.String())
-
-	return nil
+	return build.String(), nil
 }

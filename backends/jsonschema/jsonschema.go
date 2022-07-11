@@ -2,8 +2,12 @@ package jsonschema
 
 import (
 	"encoding/json"
+	"io/fs"
+	"io/ioutil"
 	"lugmac/backends"
 	"lugmac/typechecking"
+
+	"github.com/urfave/cli/v2"
 )
 
 type JSONSchemaBackend struct {
@@ -48,7 +52,44 @@ func (j JSONSchemaBackend) JSONTypeOf(lugma typechecking.Type, module string, in
 	}
 }
 
-func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) error {
+func init() {
+	backends.RegisterBackend(JSONSchemaBackend{})
+}
+
+func (j JSONSchemaBackend) GenerateCommand() *cli.Command {
+	return &cli.Command{
+		Name:    "json-schema",
+		Aliases: []string{"jsons"},
+		Usage:   "Generate JSON Schema files for Lugma",
+		Flags:   backends.StandardFlags,
+		Action: func(cCtx *cli.Context) error {
+			output := cCtx.String("output")
+
+			ctx := typechecking.NewContext()
+			err := ctx.MakeModule(cCtx.Args().First())
+			if err != nil {
+				return err
+			}
+
+			var result string
+
+			result, err = j.Generate(cCtx.Args().First(), ctx)
+			if err != nil {
+				return err
+			}
+
+			if output == "" {
+				println(result)
+			} else {
+				ioutil.WriteFile(output, []byte(result), fs.ModePerm)
+			}
+
+			return nil
+		},
+	}
+}
+
+func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) (string, error) {
 	mod := in.KnownModules[module]
 
 	schemas := map[string]AnyDict{}
@@ -175,9 +216,8 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) err
 		"$defs":   schemas,
 	}, "", "\t")
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	println(string(data))
-	return nil
+	return string(data), nil
 }

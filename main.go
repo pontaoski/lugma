@@ -1,21 +1,33 @@
 package main
 
 import (
-	"lugmac/backends/typescript"
-	"lugmac/typechecking"
+	"log"
+	"lugmac/backends"
 	"os"
+
+	"github.com/urfave/cli/v2"
+
+	_ "lugmac/backends/jsonschema"
+	_ "lugmac/backends/typescript"
 )
 
 func main() {
-	ctx := typechecking.NewContext()
-	err := ctx.MakeModule(os.Args[1])
-	if err != nil {
-		panic(err)
+	gen := &cli.Command{
+		Name:  "generate",
+		Usage: "Generate code from Lugma IDL definitions",
+	}
+	for _, backend := range backends.Backends {
+		gen.Subcommands = append(gen.Subcommands, backend.GenerateCommand())
+	}
+	app := &cli.App{
+		Usage: "The command for everything Lugma",
+		Commands: []*cli.Command{
+			gen,
+		},
 	}
 
-	j := typescript.TypescriptBackend{}
-	err = j.Generate(os.Args[1], ctx)
+	err := app.Run(os.Args)
 	if err != nil {
-		panic(err)
+		log.Fatalf("%s", err)
 	}
 }
