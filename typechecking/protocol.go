@@ -1,34 +1,33 @@
 package typechecking
 
-type Protocol struct {
-	Name          string
-	Documentation string
-	DefinedAt     Path
+import "lugmac/ast"
 
-	Funcs   []Func
-	Events  []Event
-	Signals []Signal
+type Protocol struct {
+	object
+	Documentation *ast.ItemDocumentation
+
+	Funcs   []*Func
+	Events  []*Event
+	Signals []*Signal
 }
 
-var _ Object = Protocol{}
+var _ Object = &Protocol{}
 
 func (p Protocol) isObject() {}
-func (p Protocol) Path() Path {
-	return p.DefinedAt
-}
+
 func (p Protocol) Child(name string) Object {
 	for _, fn := range p.Funcs {
-		if fn.Name == name {
+		if fn.ObjectName() == name {
 			return fn
 		}
 	}
 	for _, ev := range p.Events {
-		if ev.Name == name {
+		if ev.ObjectName() == name {
 			return ev
 		}
 	}
 	for _, sig := range p.Signals {
-		if sig.Name == name {
+		if sig.ObjectName() == name {
 			return sig
 		}
 	}
@@ -36,46 +35,31 @@ func (p Protocol) Child(name string) Object {
 }
 
 type Func struct {
-	Name          string
-	Documentation string
-	DefinedAt     Path
+	object
+	Documentation *ast.ItemDocumentation
 
-	Arguments []Field
+	Arguments []*Field
 
 	Returns Type
 	Throws  Type
 }
 
-func (f Func) isObject()                {}
 func (f Func) Child(name string) Object { return nil }
-func (f Func) Path() Path {
-	return f.DefinedAt
-}
 
 type Event struct {
-	Name          string
-	Documentation string
-	DefinedAt     Path
+	object
+	Documentation *ast.ItemDocumentation
 
-	Arguments []Field
+	Arguments []*Field
 }
 
-func (f Event) isObject()                {}
 func (f Event) Child(name string) Object { return nil }
-func (f Event) Path() Path {
-	return f.DefinedAt
-}
 
 type Signal struct {
-	Name          string
-	Documentation string
-	DefinedAt     Path
+	object
+	Documentation *ast.ItemDocumentation
 
-	Arguments []Field
+	Arguments []*Field
 }
 
-func (f Signal) isObject()                {}
 func (f Signal) Child(name string) Object { return nil }
-func (f Signal) Path() Path {
-	return f.DefinedAt
-}

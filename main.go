@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 	"lugmac/backends"
-	"lugmac/typechecking"
+	"lugmac/docgen"
+	"lugmac/modules"
 	"os"
 
 	"github.com/urfave/cli/v2"
@@ -24,16 +25,17 @@ func main() {
 		Usage: "The command for everything Lugma",
 		Commands: []*cli.Command{
 			gen,
-			{
-				Name:  "document",
-				Usage: "Generate documentation from Lugma IDL definitions",
-			},
+			docgen.Command,
 			{
 				Name:  "verify",
 				Usage: "Verify a Lugma file",
 				Action: func(cCtx *cli.Context) error {
-					ctx := typechecking.NewContext()
-					err := ctx.MakeModule(cCtx.Args().First())
+					mod, err := modules.LoadWorkspaceFrom(".")
+					if err != nil {
+						return err
+					}
+
+					err = mod.GenerateModules()
 					if err != nil {
 						return err
 					}

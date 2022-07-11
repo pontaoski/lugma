@@ -1,0 +1,4 @@
+enum ItemPosition {
+    case before(id: UInt64)
+    case after(id: UInt64)
+}

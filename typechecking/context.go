@@ -4,20 +4,51 @@ import (
 	"fmt"
 	"io/ioutil"
 	"lugmac/ast"
+	"path"
 
 	lugma "lugmac/parser"
 
 	sitter "github.com/smacker/go-tree-sitter"
 )
 
-type Context struct {
-	Environment  *Environment
-	KnownModules map[string]*Module
+type ImportResolver interface {
+	ModuleFor(context *Context, import_ string, from string) (*Module, error)
 }
 
-func NewContext() *Context {
-	return &Context{World, map[string]*Module{}}
+type Context struct {
+	Environment    *Environment
+	ImportResolver ImportResolver
 }
+
+func NewContext(i ImportResolver) *Context {
+	return &Context{World, i}
+}
+
+type fileImportResolver struct {
+}
+
+func (f *fileImportResolver) ModuleFor(ctx *Context, path string, from string) (*Module, error) {
+	parser := sitter.NewParser()
+	parser.SetLanguage(lugma.GetLanguage())
+
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load module at %s: %w", path, err)
+	}
+
+	tree := parser.Parse(nil, file)
+
+	fileAST := ast.FileFromNode(tree.RootNode(), file)
+
+	module, err := ctx.Module(&fileAST, path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load module at %s: %w", path, err)
+	}
+
+	return module, nil
+}
+
+var FileImportResolver ImportResolver = &fileImportResolver{}
 
 func (c *Context) PushEnvironment() *Environment {
 	c.Environment = &Environment{map[string]Object{}, c.Environment}
@@ -100,14 +131,16 @@ func lookupType(typ ast.Type, in *Context) (Type, error) {
 	}
 }
 
-func fieldList(fields []ast.Field, parentPath Path, in *Context) ([]Field, error) {
-	var fs []Field
+func fieldList(fields []ast.Field, parentPath Path, parent Object, in *Context) ([]*Field, error) {
+	var fs []*Field
 
 	for _, field := range fields {
-		var f Field
+		f := &Field{}
 
 		f.Name = field.Name
 		f.DefinedAt = parentPath.Appended(f.Name)
+		f.InParent = parent
+
 		typ, err := lookupType(field.Type, in)
 		if err != nil {
 			return nil, err
@@ -120,14 +153,15 @@ func fieldList(fields []ast.Field, parentPath Path, in *Context) ([]Field, error
 	return fs, nil
 }
 
-func argList(fields []ast.Argument, parentPath Path, in *Context) ([]Field, error) {
-	var fs []Field
+func argList(fields []ast.Argument, parentPath Path, parent Object, in *Context) ([]*Field, error) {
+	var fs []*Field
 
 	for _, field := range fields {
-		var f Field
-
+		f := &Field{}
 		f.Name = field.Name
 		f.DefinedAt = parentPath.Appended(f.Name)
+		f.InParent = parent
+
 		typ, err := lookupType(field.Type, in)
 		if err != nil {
 			return nil, err
@@ -140,60 +174,49 @@ func argList(fields []ast.Argument, parentPath Path, in *Context) ([]Field, erro
 	return fs, nil
 }
 
-func (ctx *Context) MakeModule(at string) error {
-	_, err := ctx.ModuleFor(at)
-	return err
-}
-
-func (ctx *Context) ModuleFor(path string) (*Module, error) {
-	if v, ok := ctx.KnownModules[path]; ok {
-		return v, nil
-	}
-
-	parser := sitter.NewParser()
-	parser.SetLanguage(lugma.GetLanguage())
-
-	file, err := ioutil.ReadFile(path)
+func (ctx *Context) ModuleFor(path, from string) (*Module, error) {
+	module, err := ctx.ImportResolver.ModuleFor(ctx, path, from)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load module at %s: %w", path, err)
+		return nil, err
 	}
 
-	tree := parser.Parse(nil, file)
-
-	fileAST := ast.FileFromNode(tree.RootNode(), file)
-
-	module, err := ctx.Module(&fileAST, path)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to load module at %s: %w", path, err)
-	}
-
-	ctx.KnownModules[path] = module
 	return module, nil
 }
 
-func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
-	var m Module
-	m.DefinedAt = Path{path, ""}
+func (ctx *Context) MultiFileModule(trees []*ast.File, modpath string) (*Module, error) {
+	m := &Module{}
+	m.DefinedAt = Path{modpath, ""}
+	m.Name = path.Base(modpath)
 
 	ctx.PushEnvironment()
 	defer ctx.PopEnvironment()
 
+	megaFile := ast.CombineFiles(trees...)
+
+	err := ctx.doSingleModule(m, megaFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+func (ctx *Context) doSingleModule(m *Module, tree *ast.File) error {
 	for _, imports := range tree.Imports {
-		module, err := ctx.ModuleFor(imports.Path)
+		module, err := ctx.ModuleFor(imports.Path, m.DefinedAt.ModulePath)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		ctx.Environment.Items[imports.As] = module
 	}
 	for _, item := range tree.Structs {
-		var s Struct
-		s.Name = item.Name
+		s := &Struct{}
+		s.object = newObject(item.Name, m.DefinedAt.Appended(item.Name), m, ctx.Environment)
 		s.Documentation = item.Documentation
-		s.DefinedAt = m.DefinedAt.Appended(item.Name)
 
-		fields, err := fieldList(item.Fields, s.DefinedAt, ctx)
+		fields, err := fieldList(item.Fields, s.Path(), s, ctx)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		s.Fields = fields
 
@@ -201,20 +224,18 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 		ctx.Environment.Items[item.Name] = s
 	}
 	for _, item := range tree.Enums {
-		var e Enum
-		e.Name = item.Name
-		e.DefinedAt = m.DefinedAt.Appended(item.Name)
+		e := &Enum{}
+		e.object = newObject(item.Name, m.DefinedAt.Appended(item.Name), m, ctx.Environment)
 		e.Documentation = item.Documentation
 
 		for _, cas := range item.Cases {
-			var c Case
-			c.Name = cas.Name
-			c.DefinedAt = e.DefinedAt.Appended(cas.Name)
+			c := &Case{}
+			c.object = newObject(cas.Name, e.Path().Appended(cas.Name), e, ctx.Environment)
 			c.Documentation = cas.Documentation
 
-			args, err := argList(cas.Values, c.DefinedAt, ctx)
+			args, err := argList(cas.Values, c.Path(), c, ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			c.Fields = args
@@ -225,15 +246,13 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 		ctx.Environment.Items[item.Name] = e
 	}
 	for _, item := range tree.Flagsets {
-		var fs Flagset
-		fs.Name = item.Name
-		fs.Optional = item.Optional
-		fs.DefinedAt = m.DefinedAt.Appended(item.Name)
+		fs := &Flagset{}
+		fs.object = newObject(item.Name, m.DefinedAt.Appended(item.Name), m, ctx.Environment)
 		fs.Documentation = item.Documentation
 
 		for _, flag := range item.Flags {
-			var f Flag
-			f.Name = flag.Name
+			f := &Flag{}
+			f.object = newObject(flag.Name, f.Path().Appended(flag.Name), f, ctx.Environment)
 			f.Documentation = flag.Documentation
 
 			fs.Flags = append(fs.Flags, f)
@@ -243,57 +262,52 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 		ctx.Environment.Items[item.Name] = fs
 	}
 	for _, item := range tree.Protocols {
-		var p Protocol
-		p.Name = item.Name
-		p.DefinedAt = m.DefinedAt.Appended(item.Name)
+		p := &Protocol{}
+		p.object = newObject(item.Name, m.DefinedAt.Appended(item.Name), m, ctx.Environment)
 		p.Documentation = item.Documentation
 
 		for _, fn := range item.Functions {
-			var f Func
-
-			f.Name = fn.Name
-			f.DefinedAt = p.DefinedAt.Appended(f.Name)
+			f := &Func{}
+			f.object = newObject(fn.Name, p.Path().Appended(fn.Name), p, ctx.Environment)
 			f.Documentation = fn.Documentation
 
-			args, err := argList(fn.Arguments, f.DefinedAt, ctx)
+			args, err := argList(fn.Arguments, f.Path(), f, ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			f.Arguments = args
 			f.Returns, err = lookupType(fn.Returns, ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			f.Throws, err = lookupType(fn.Throws, ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			p.Funcs = append(p.Funcs, f)
 		}
 		for _, ev := range item.Events {
-			var e Event
-			e.Name = ev.Name
-			e.DefinedAt = p.DefinedAt.Appended(e.Name)
+			e := &Event{}
+			e.object = newObject(ev.Name, p.Path().Appended(ev.Name), p, ctx.Environment)
 			e.Documentation = ev.Documentation
 
-			args, err := argList(ev.Arguments, e.DefinedAt, ctx)
+			args, err := argList(ev.Arguments, e.Path(), e, ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			e.Arguments = args
 
 			p.Events = append(p.Events, e)
 		}
 		for _, sig := range item.Signals {
-			var s Signal
-			s.Name = sig.Name
-			s.DefinedAt = p.DefinedAt.Appended(s.Name)
+			s := &Signal{}
+			s.object = newObject(sig.Name, p.Path().Appended(sig.Name), p, ctx.Environment)
 			s.Documentation = sig.Documentation
 
-			args, err := argList(sig.Arguments, s.DefinedAt, ctx)
+			args, err := argList(sig.Arguments, s.Path(), s, ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			s.Arguments = args
 
@@ -304,5 +318,21 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 		ctx.Environment.Items[item.Name] = p
 	}
 
-	return &m, nil
+	return nil
+}
+
+func (ctx *Context) Module(tree *ast.File, modpath string) (*Module, error) {
+	m := &Module{}
+	m.DefinedAt = Path{modpath, ""}
+	m.Name = path.Base(modpath)
+
+	ctx.PushEnvironment()
+	defer ctx.PopEnvironment()
+
+	err := ctx.doSingleModule(m, tree)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }

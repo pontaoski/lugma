@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://microsoft.github.io/vscode-codicons/dist/codicon.css">
+        <link rel="stylesheet" href="/main.css">
+        <script defer src="/main.js"> </script>
+    </head>
+    <body>
+        <nav class="bg-zinc-900 dark:bg-black text-white border-b border-adaptive p-3">
+            {{ .Breadcrumbs }}
+        </nav>
+        <div class="flex flex-row border-b border-adaptive">
+            <aside class="toc">
+                {{ .TableOfContents }}
+            </aside>
+            <div class="flex flex-col items-center w-full py-10">
+                <main class="prose prose-lg dark:prose-invert w-full">
+                    {{ .Main }}
+                </main>
+            </div>
+        </div>
+    </body>
+</html>

@@ -12,6 +12,11 @@ type Type interface {
 
 type PrimitiveType int
 
+// Env implements Type
+func (PrimitiveType) Env() *Environment {
+	panic("unimplemented")
+}
+
 const (
 	UInt8 PrimitiveType = iota
 	UInt16
@@ -65,8 +70,14 @@ func (p PrimitiveType) String() string {
 		panic("Bad primitive type")
 	}
 }
+func (p PrimitiveType) Parent() Object {
+	return nil
+}
 func (p PrimitiveType) Path() Path {
 	return Path{"", p.String()}
+}
+func (p PrimitiveType) ObjectName() string {
+	return "Array"
 }
 
 var _ Type = PrimitiveType(0)
@@ -85,6 +96,9 @@ func (a ArrayType) Child(name string) Object {
 		return nil
 	}
 }
+func (a ArrayType) Env() *Environment {
+	return nil
+}
 func (a ArrayType) Keyable() bool {
 	return false
 }
@@ -94,6 +108,12 @@ func (a ArrayType) String() string {
 func (a ArrayType) Path() Path {
 	return Path{"", "Array"}
 }
+func (a ArrayType) Parent() Object {
+	return nil
+}
+func (d ArrayType) ObjectName() string {
+	return "Array"
+}
 
 var _ Type = ArrayType{}
 
@@ -102,8 +122,9 @@ type DictionaryType struct {
 	Element Type
 }
 
-func (d DictionaryType) isObject() {}
-func (d DictionaryType) isType()   {}
+func (d DictionaryType) isObject()         {}
+func (d DictionaryType) isType()           {}
+func (d DictionaryType) Env() *Environment { return nil }
 func (d DictionaryType) Child(name string) Object {
 	switch name {
 	case "Element":
@@ -123,6 +144,12 @@ func (d DictionaryType) String() string {
 func (d DictionaryType) Path() Path {
 	return Path{"", "Dictionary"}
 }
+func (d DictionaryType) Parent() Object {
+	return nil
+}
+func (d DictionaryType) ObjectName() string {
+	return "Dictionary"
+}
 
 var _ Type = DictionaryType{}
 
@@ -130,8 +157,9 @@ type OptionalType struct {
 	Element Type
 }
 
-func (o OptionalType) isObject() {}
-func (o OptionalType) isType()   {}
+func (o OptionalType) isObject()         {}
+func (o OptionalType) isType()           {}
+func (o OptionalType) Env() *Environment { return nil }
 func (o OptionalType) Child(name string) Object {
 	switch name {
 	case "Element":
@@ -148,6 +176,12 @@ func (o OptionalType) String() string {
 }
 func (o OptionalType) Path() Path {
 	return Path{"", "Optional"}
+}
+func (o OptionalType) Parent() Object {
+	return nil
+}
+func (o OptionalType) ObjectName() string {
+	return "Optional"
 }
 
 var _ Type = OptionalType{}

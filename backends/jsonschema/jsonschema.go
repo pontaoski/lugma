@@ -18,7 +18,7 @@ var _ backends.Backend = JSONSchemaBackend{}
 
 type AnyDict map[string]interface{}
 
-func (j JSONSchemaBackend) JSONTypeOf(lugma typechecking.Type, module string, in *typechecking.Context) (child AnyDict) {
+func (j JSONSchemaBackend) JSONTypeOf(lugma typechecking.Type, module typechecking.Path, in *typechecking.Context) (child AnyDict) {
 	switch k := lugma.(type) {
 	case typechecking.PrimitiveType:
 		switch k {
@@ -44,7 +44,7 @@ func (j JSONSchemaBackend) JSONTypeOf(lugma typechecking.Type, module string, in
 			// nothing
 		}
 		return v
-	case typechecking.Struct, typechecking.Enum:
+	case *typechecking.Struct, *typechecking.Enum:
 		elementPath := lugma.Path()
 		return AnyDict{"$ref": j.URLBase + elementPath.ModulePath + elementPath.InModulePath}
 	default:
@@ -65,15 +65,15 @@ func (j JSONSchemaBackend) GenerateCommand() *cli.Command {
 		Action: func(cCtx *cli.Context) error {
 			output := cCtx.String("output")
 
-			ctx := typechecking.NewContext()
-			err := ctx.MakeModule(cCtx.Args().First())
+			ctx := typechecking.NewContext(typechecking.FileImportResolver)
+			mod, err := ctx.ModuleFor(cCtx.Args().First(), "")
 			if err != nil {
 				return err
 			}
 
 			var result string
 
-			result, err = j.Generate(cCtx.Args().First(), ctx)
+			result, err = j.Generate(mod, ctx)
 			if err != nil {
 				return err
 			}
@@ -89,9 +89,7 @@ func (j JSONSchemaBackend) GenerateCommand() *cli.Command {
 	}
 }
 
-func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) (string, error) {
-	mod := in.KnownModules[module]
-
+func (j JSONSchemaBackend) Generate(mod *typechecking.Module, in *typechecking.Context) (string, error) {
 	schemas := map[string]AnyDict{}
 
 	for _, strct := range mod.Structs {
@@ -99,7 +97,7 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) (st
 		required := []string{}
 
 		for _, item := range strct.Fields {
-			props[item.Name] = j.JSONTypeOf(item.Type, module, in)
+			props[item.Name] = j.JSONTypeOf(item.Type, mod.Path(), in)
 			switch props[item.Name]["type"].(type) {
 			case []string:
 				// do nothing
@@ -110,7 +108,7 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) (st
 
 		loc := j.URLBase + strct.Path().ModulePath + strct.Path().InModulePath
 		schemas[loc] = AnyDict{
-			"$id":        strct.Name,
+			"$id":        strct.ObjectName(),
 			"type":       "object",
 			"properties": props,
 			"required":   required,
@@ -122,13 +120,13 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) (st
 		simple := enum.Simple()
 		for _, esac := range enum.Cases {
 			if simple {
-				oneOfs = append(oneOfs, AnyDict{"type": "string", "const": esac.Name})
+				oneOfs = append(oneOfs, AnyDict{"type": "string", "const": esac.ObjectName()})
 			} else {
 				props := map[string]AnyDict{}
 				required := []string{}
 
 				for _, item := range esac.Fields {
-					props[item.Name] = j.JSONTypeOf(item.Type, module, in)
+					props[item.Name] = j.JSONTypeOf(item.Type, mod.Path(), in)
 					switch props[item.Name]["type"].(type) {
 					case []string:
 						// do nothing
@@ -157,7 +155,7 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) (st
 			required := []string{}
 
 			for _, item := range fn.Arguments {
-				props[item.Name] = j.JSONTypeOf(item.Type, module, in)
+				props[item.Name] = j.JSONTypeOf(item.Type, mod.Path(), in)
 				switch props[item.Name]["type"].(type) {
 				case []string:
 					// do nothing
@@ -179,7 +177,7 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) (st
 			required := []string{}
 
 			for _, item := range ev.Arguments {
-				props[item.Name] = j.JSONTypeOf(item.Type, module, in)
+				props[item.Name] = j.JSONTypeOf(item.Type, mod.Path(), in)
 				switch props[item.Name]["type"].(type) {
 				case []string:
 					// do nothing
@@ -211,7 +209,7 @@ func (j JSONSchemaBackend) Generate(module string, in *typechecking.Context) (st
 	}
 
 	data, err := json.MarshalIndent(AnyDict{
-		"$id":     j.URLBase + module,
+		"$id":     j.URLBase + mod.Path().InModulePath,
 		"$schema": "https://json-schema.org/draft/2020-12/schema",
 		"$defs":   schemas,
 	}, "", "\t")

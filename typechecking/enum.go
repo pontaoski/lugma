@@ -1,25 +1,24 @@
 package typechecking
 
-import "fmt"
+import (
+	"fmt"
+	"lugmac/ast"
+)
 
 type Enum struct {
-	Name          string
-	DefinedAt     Path
-	Documentation string
+	object
+	Documentation *ast.ItemDocumentation
 
-	Cases []Case
+	Cases []*Case
 }
 
-var _ Type = Enum{}
+var _ Type = &Enum{}
 
 func (e Enum) isType()   {}
 func (e Enum) isObject() {}
-func (e Enum) Path() Path {
-	return e.DefinedAt
-}
 func (e Enum) Child(name string) Object {
 	for _, cas := range e.Cases {
-		if cas.Name == name {
+		if cas.ObjectName() == name {
 			return cas
 		}
 	}
@@ -29,7 +28,7 @@ func (e Enum) Keyable() bool {
 	return false
 }
 func (e Enum) String() string {
-	return fmt.Sprintf("%s", e.Name)
+	return fmt.Sprintf("%s", e.ObjectName())
 }
 func (e Enum) Simple() bool {
 	for _, esac := range e.Cases {
@@ -41,18 +40,14 @@ func (e Enum) Simple() bool {
 }
 
 type Case struct {
-	Name          string
-	DefinedAt     Path
-	Documentation string
+	object
+	Documentation *ast.ItemDocumentation
 
-	Fields []Field
+	Fields []*Field
 }
 
-var _ Object = Case{}
+var _ Object = &Case{}
 
-func (c Case) Path() Path {
-	return c.DefinedAt
-}
 func (c Case) isObject() {}
 func (c Case) Child(name string) Object {
 	for _, field := range c.Fields {

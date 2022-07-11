@@ -72,16 +72,19 @@ func dedent(text string) string {
 	return text
 }
 
-func DocumentationFromNode(n *sitter.Node, input []byte) string {
+func DocumentationFromNode(n *sitter.Node, input []byte) *ItemDocumentation {
 	sib := n.PrevNamedSibling()
+	if n.Parent().Type() == "statement" {
+		sib = n.Parent().PrevNamedSibling()
+	}
 	if sib == nil || sib.Type() != "comment" {
-		return ""
+		return nil
 	}
 
 	cont := sib.Content(input)
 
 	if !strings.HasPrefix(cont, "/**") {
-		return ""
+		return nil
 	}
 
 	cont = strings.TrimPrefix(strings.TrimSuffix(cont, "*/"), "/**")
@@ -98,7 +101,31 @@ func DocumentationFromNode(n *sitter.Node, input []byte) string {
 	cont = dedent(cont)
 	cont = strings.TrimSpace(cont)
 
-	return cont
+	return FromDocumentationComment(cont, n.Type() == "func_declaration" || n.Type() == "event_declaration" || n.Type() == "signal_declaration")
+}
+
+func CombineFiles(files ...*File) *File {
+	ret := &File{}
+
+	for _, file := range files {
+		for _, I := range file.Imports {
+			ret.Imports = append(ret.Imports, I)
+		}
+		for _, P := range file.Protocols {
+			ret.Protocols = append(ret.Protocols, P)
+		}
+		for _, S := range file.Structs {
+			ret.Structs = append(ret.Structs, S)
+		}
+		for _, E := range file.Enums {
+			ret.Enums = append(ret.Enums, E)
+		}
+		for _, F := range file.Flagsets {
+			ret.Flagsets = append(ret.Flagsets, F)
+		}
+	}
+
+	return ret
 }
 
 func FileFromNode(n *sitter.Node, input []byte) File {
@@ -149,7 +176,7 @@ func ImportFromNode(n *sitter.Node, input []byte) Import {
 
 type Protocol struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Functions []Function
 	Events    []Event
@@ -162,6 +189,7 @@ func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
 	p.Span = SpanFromNode(n)
 	p.Name = n.ChildByFieldName("name").Content(input)
 	p.Documentation = DocumentationFromNode(n, input)
+
 	for i := 0; i < int(n.NamedChildCount()); i++ {
 		child := n.NamedChild(i)
 		switch child.Type() {
@@ -182,7 +210,7 @@ func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
 
 type Function struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Arguments []Argument
 
@@ -237,7 +265,7 @@ func ArgumentFromNode(n *sitter.Node, input []byte) Argument {
 
 type Event struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Arguments []Argument
 	Span      Span
@@ -265,7 +293,7 @@ func EventFromNode(n *sitter.Node, input []byte) Event {
 
 type Signal struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Arguments []Argument
 	Span      Span
@@ -293,7 +321,7 @@ func SignalFromNode(n *sitter.Node, input []byte) Signal {
 
 type Struct struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Fields []Field
 	Span   Span
@@ -323,7 +351,7 @@ func StructFromNode(n *sitter.Node, input []byte) Struct {
 
 type Field struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Type Type
 	Span Span
@@ -342,7 +370,7 @@ func FieldFromNode(n *sitter.Node, input []byte) Field {
 
 type Enum struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Cases []Case
 	Span  Span
@@ -372,7 +400,7 @@ func EnumFromNode(n *sitter.Node, input []byte) Enum {
 
 type Case struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Values []Argument
 	Span   Span
@@ -402,7 +430,7 @@ func CaseFromNode(n *sitter.Node, input []byte) Case {
 
 type Flagset struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Optional bool
 	Flags    []Flag
@@ -412,7 +440,7 @@ type Flagset struct {
 
 type Flag struct {
 	Name          string
-	Documentation string
+	Documentation *ItemDocumentation
 
 	Span Span
 }

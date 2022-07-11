@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.codicon[class*="codicon-"] {
+    display: inline;
+    text-align: unset;
+    font-size: larger;
+    vertical-align: text-bottom;
+    margin-right: 0.5rem;
+}
+
+html {
+    @apply bg-white dark:bg-zinc-900 dark:text-white;
+}
+
+.border-adaptive {
+    @apply border-zinc-400 dark:border-zinc-800;
+}
+
+.symbol-structure {
+    color: #3daee9;
+}
+
+.symbol-field {
+    color: #327fa2;
+}
+
+.symbol-enum {
+    color: #ef973c;
+}
+
+.symbol-enum-member {
+    color: #e8cb2d;
+}
+
+.symbol-class {
+    color: #e9643a;
+}
+
+.symbol-method {
+    color: #e93a9a;
+}
+
+:root {
+    font-family: Inter, Sailec, sans-serif;
+}
+
+aside.toc {
+    @apply border-adaptive border-r w-64;
+}
+aside.toc h3 {
+    @apply font-bold opacity-60 py-1 text-sm;
+}
+
+.depth-spacer {
+    @apply py-1 items-center;
+}
+ul .depth-spacer {
+    @apply pl-2;
+}
+ul ul .depth-spacer {
+    @apply pl-8;
+}
+
+.depth-spacer .codicon-chevron-right {
+    font-size: initial;
+    margin-right: 0.1rem;
+    @apply cursor-default;
+}
+
+.is-open + ul {
+    display: initial;
+}
+.is-open .codicon-chevron-right {
+    @apply rotate-90;
+}
+.is-closed + ul {
+    display: none;
+}
+.is-current {
+    @apply bg-sky-100 dark:bg-sky-900;
+}
+
+.symbol-link {
+    @apply font-mono;
+}
+
+dt {
+    @apply font-mono font-bold;
+}
+
+dd {
+    @apply pl-4;
+}
+
+a.code {
+    @apply no-underline;
+}
+
+a .code {
+    @apply text-zinc-400;
+}
+
+a .code-item-name {
+    @apply text-sky-600;
+}
+
+.prose pre code .code-item-name {
+    @apply text-yellow-300;
+}
+
+.prose pre code .code-keyword {
+    @apply text-pink-400;
+}
+
+.prose pre code .code-type {
+    @apply text-purple-400;
+}
+
+nav a {
+    @apply opacity-60;
+}
+nav a:last-of-type {
+    @apply opacity-100;
+}

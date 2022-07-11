@@ -1,0 +1,9 @@
+name: ChatProtocol
+version: 0.0.0
+products:
+  - type: module
+    name: Base
+  - type: module
+    name: Text
+    depends:
+      - Base
