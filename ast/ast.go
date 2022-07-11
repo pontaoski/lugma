@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"fmt"
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -8,6 +9,10 @@ import (
 
 type Span struct {
 	Start, End sitter.Point
+}
+
+func (s Span) String() string {
+	return fmt.Sprintf("%d:%d", s.Start.Row, s.Start.Column)
 }
 
 func SpanFromNode(n *sitter.Node) Span {
@@ -39,6 +44,8 @@ func FileFromNode(n *sitter.Node, input []byte) File {
 			f.Enums = append(f.Enums, EnumFromNode(child, input))
 		case "flagset_declaration":
 			f.Flagsets = append(f.Flagsets, FlagsetFromNode(child, input))
+		case "comment":
+			continue
 		default:
 			panic("Unhandled " + child.Type())
 		}
@@ -82,7 +89,7 @@ func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
 			p.Functions = append(p.Functions, FunctionFromNode(child, input))
 		case "event_declaration":
 			p.Events = append(p.Events, EventFromNode(child, input))
-		case "identifier":
+		case "identifier", "comment":
 			continue
 		default:
 			panic("Unhandled " + child.Type())
@@ -188,7 +195,7 @@ func StructFromNode(n *sitter.Node, input []byte) Struct {
 		switch child.Type() {
 		case "field_declaration":
 			s.Fields = append(s.Fields, FieldFromNode(child, input))
-		case "identifier":
+		case "identifier", "comment":
 			continue
 		default:
 			panic("Unhandled " + child.Type())
@@ -233,7 +240,7 @@ func EnumFromNode(n *sitter.Node, input []byte) Enum {
 		switch child.Type() {
 		case "case_declaration":
 			e.Cases = append(e.Cases, CaseFromNode(child, input))
-		case "identifier":
+		case "identifier", "comment":
 			continue
 		default:
 			panic("Unhandled " + child.Type())
@@ -261,7 +268,7 @@ func CaseFromNode(n *sitter.Node, input []byte) Case {
 		switch child.Type() {
 		case "arg":
 			c.Values = append(c.Values, ArgumentFromNode(child, input))
-		case "identifier":
+		case "identifier", "comment":
 			continue
 		default:
 			panic("Unhandled " + child.Type())
@@ -298,7 +305,7 @@ func FlagsetFromNode(n *sitter.Node, input []byte) Flagset {
 	for i := 0; i < int(n.NamedChildCount()); i++ {
 		child := n.NamedChild(i)
 		switch child.Type() {
-		case "identifier", "optional":
+		case "identifier", "optional", "comment":
 			continue
 		case "flag_declaration":
 			f.Flags = append(f.Flags, Flag{child.ChildByFieldName("name").Content(input), SpanFromNode(child)})
