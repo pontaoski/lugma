@@ -2,6 +2,7 @@ package ast
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	sitter "github.com/smacker/go-tree-sitter"
@@ -28,10 +29,86 @@ type File struct {
 	Span      Span
 }
 
+var (
+	whitespaceOnly    = regexp.MustCompile("(?m)^[ \t]+$")
+	leadingWhitespace = regexp.MustCompile("(?m)(^[ \t]*)(?:[^ \t\n])")
+)
+
+// dedent removes any common leading whitespace from every line in text.
+//
+// This can be used to make multiline strings to line up with the left edge of
+// the display, while still presenting them in the source code in indented
+// form.
+func dedent(text string) string {
+	var margin string
+
+	text = whitespaceOnly.ReplaceAllString(text, "")
+	indents := leadingWhitespace.FindAllStringSubmatch(text, -1)
+
+	// Look for the longest leading string of spaces and tabs common to all
+	// lines.
+	for i, indent := range indents {
+		if i == 0 {
+			margin = indent[1]
+		} else if strings.HasPrefix(indent[1], margin) {
+			// Current line more deeply indented than previous winner:
+			// no change (previous winner is still on top).
+			continue
+		} else if strings.HasPrefix(margin, indent[1]) {
+			// Current line consistent with and no deeper than previous winner:
+			// it's the new winner.
+			margin = indent[1]
+		} else {
+			// Current line and previous winner have no common whitespace:
+			// there is no margin.
+			margin = ""
+			break
+		}
+	}
+
+	if margin != "" {
+		text = regexp.MustCompile("(?m)^"+margin).ReplaceAllString(text, "")
+	}
+	return text
+}
+
+func DocumentationFromNode(n *sitter.Node, input []byte) string {
+	sib := n.PrevNamedSibling()
+	if sib == nil || sib.Type() != "comment" {
+		return ""
+	}
+
+	cont := sib.Content(input)
+
+	if !strings.HasPrefix(cont, "/**") {
+		return ""
+	}
+
+	cont = strings.TrimPrefix(strings.TrimSuffix(cont, "*/"), "/**")
+
+	lines := strings.Split(cont, "\n")
+	for strings.TrimSpace(lines[0]) == "" {
+		lines = lines[1:]
+	}
+	for strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	cont = strings.Join(lines, "\n")
+	cont = dedent(cont)
+	cont = strings.TrimSpace(cont)
+
+	return cont
+}
+
 func FileFromNode(n *sitter.Node, input []byte) File {
 	var f File
 	f.Span = SpanFromNode(n)
 	for i := 0; i < int(n.NamedChildCount()); i++ {
+		if n.NamedChild(i).Type() == "comment" {
+			continue
+		}
+
 		child := n.NamedChild(i).Child(0)
 		switch child.Type() {
 		case "import":
@@ -71,7 +148,8 @@ func ImportFromNode(n *sitter.Node, input []byte) Import {
 }
 
 type Protocol struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Functions []Function
 	Events    []Event
@@ -82,6 +160,7 @@ func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
 	var p Protocol
 	p.Span = SpanFromNode(n)
 	p.Name = n.ChildByFieldName("name").Content(input)
+	p.Documentation = DocumentationFromNode(n, input)
 	for i := 0; i < int(n.NamedChildCount()); i++ {
 		child := n.NamedChild(i)
 		switch child.Type() {
@@ -99,7 +178,8 @@ func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
 }
 
 type Function struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Arguments []Argument
 
@@ -113,6 +193,7 @@ func FunctionFromNode(n *sitter.Node, input []byte) Function {
 	f.Span = SpanFromNode(n)
 
 	f.Name = n.ChildByFieldName("name").Content(input)
+	f.Documentation = DocumentationFromNode(n, input)
 
 	for i := 0; i < int(n.NamedChildCount()); i++ {
 		child := n.NamedChild(i)
@@ -152,7 +233,8 @@ func ArgumentFromNode(n *sitter.Node, input []byte) Argument {
 }
 
 type Event struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Arguments []Argument
 	Span      Span
@@ -161,6 +243,7 @@ type Event struct {
 func EventFromNode(n *sitter.Node, input []byte) Event {
 	var e Event
 	e.Span = SpanFromNode(n)
+	e.Documentation = DocumentationFromNode(n, input)
 
 	e.Name = n.ChildByFieldName("name").Content(input)
 
@@ -178,7 +261,8 @@ func EventFromNode(n *sitter.Node, input []byte) Event {
 }
 
 type Struct struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Fields []Field
 	Span   Span
@@ -187,6 +271,7 @@ type Struct struct {
 func StructFromNode(n *sitter.Node, input []byte) Struct {
 	var s Struct
 	s.Span = SpanFromNode(n)
+	s.Documentation = DocumentationFromNode(n, input)
 
 	s.Name = n.ChildByFieldName("name").Content(input)
 
@@ -206,7 +291,8 @@ func StructFromNode(n *sitter.Node, input []byte) Struct {
 }
 
 type Field struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Type Type
 	Span Span
@@ -215,6 +301,7 @@ type Field struct {
 func FieldFromNode(n *sitter.Node, input []byte) Field {
 	var f Field
 	f.Span = SpanFromNode(n)
+	f.Documentation = DocumentationFromNode(n, input)
 
 	f.Name = n.ChildByFieldName("name").Content(input)
 	f.Type = TypeFromNode(n.ChildByFieldName("type"), input)
@@ -223,7 +310,8 @@ func FieldFromNode(n *sitter.Node, input []byte) Field {
 }
 
 type Enum struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Cases []Case
 	Span  Span
@@ -232,6 +320,7 @@ type Enum struct {
 func EnumFromNode(n *sitter.Node, input []byte) Enum {
 	var e Enum
 	e.Span = SpanFromNode(n)
+	e.Documentation = DocumentationFromNode(n, input)
 
 	e.Name = n.ChildByFieldName("name").Content(input)
 
@@ -251,7 +340,8 @@ func EnumFromNode(n *sitter.Node, input []byte) Enum {
 }
 
 type Case struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Values []Argument
 	Span   Span
@@ -260,6 +350,7 @@ type Case struct {
 func CaseFromNode(n *sitter.Node, input []byte) Case {
 	var c Case
 	c.Span = SpanFromNode(n)
+	c.Documentation = DocumentationFromNode(n, input)
 
 	c.Name = n.ChildByFieldName("name").Content(input)
 
@@ -279,7 +370,8 @@ func CaseFromNode(n *sitter.Node, input []byte) Case {
 }
 
 type Flagset struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Optional bool
 	Flags    []Flag
@@ -288,7 +380,8 @@ type Flagset struct {
 }
 
 type Flag struct {
-	Name string
+	Name          string
+	Documentation string
 
 	Span Span
 }
@@ -297,6 +390,7 @@ func FlagsetFromNode(n *sitter.Node, input []byte) Flagset {
 	var f Flagset
 	f.Name = n.ChildByFieldName("name").Content(input)
 	f.Span = SpanFromNode(n)
+	f.Documentation = DocumentationFromNode(n, input)
 
 	if n.ChildByFieldName("optional") != nil {
 		f.Optional = true
@@ -308,7 +402,7 @@ func FlagsetFromNode(n *sitter.Node, input []byte) Flagset {
 		case "identifier", "optional", "comment":
 			continue
 		case "flag_declaration":
-			f.Flags = append(f.Flags, Flag{child.ChildByFieldName("name").Content(input), SpanFromNode(child)})
+			f.Flags = append(f.Flags, Flag{child.ChildByFieldName("name").Content(input), DocumentationFromNode(child, input), SpanFromNode(child)})
 		default:
 			panic("Unhandled node " + child.Type())
 		}

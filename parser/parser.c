@@ -35,8 +35,8 @@ enum {
   anon_sym_RPAREN = 16,
   anon_sym_BANG = 17,
   anon_sym_func = 18,
-  anon_sym_DASH_GT = 19,
-  anon_sym_throws = 20,
+  anon_sym_throws = 19,
+  anon_sym_DASH_GT = 20,
   anon_sym_event = 21,
   anon_sym_LBRACK = 22,
   anon_sym_RBRACK = 23,
@@ -112,8 +112,8 @@ static const char * const ts_symbol_names[] = {
   [anon_sym_RPAREN] = ")",
   [anon_sym_BANG] = "!",
   [anon_sym_func] = "func",
-  [anon_sym_DASH_GT] = "->",
   [anon_sym_throws] = "throws",
+  [anon_sym_DASH_GT] = "->",
   [anon_sym_event] = "event",
   [anon_sym_LBRACK] = "[",
   [anon_sym_RBRACK] = "]",
@@ -189,8 +189,8 @@ static const TSSymbol ts_symbol_map[] = {
   [anon_sym_RPAREN] = anon_sym_RPAREN,
   [anon_sym_BANG] = anon_sym_BANG,
   [anon_sym_func] = anon_sym_func,
-  [anon_sym_DASH_GT] = anon_sym_DASH_GT,
   [anon_sym_throws] = anon_sym_throws,
+  [anon_sym_DASH_GT] = anon_sym_DASH_GT,
   [anon_sym_event] = anon_sym_event,
   [anon_sym_LBRACK] = anon_sym_LBRACK,
   [anon_sym_RBRACK] = anon_sym_RBRACK,
@@ -323,11 +323,11 @@ static const TSSymbolMetadata ts_symbol_metadata[] = {
     .visible = true,
     .named = false,
   },
-  [anon_sym_DASH_GT] = {
+  [anon_sym_throws] = {
     .visible = true,
     .named = false,
   },
-  [anon_sym_throws] = {
+  [anon_sym_DASH_GT] = {
     .visible = true,
     .named = false,
   },
@@ -752,10 +752,10 @@ static const TSFieldMapEntry ts_field_map_entries[] = {
     {field_values, 4},
   [78] =
     {field_name, 1},
-    {field_returns, 5},
+    {field_throws, 5},
   [80] =
     {field_name, 1},
-    {field_throws, 5},
+    {field_returns, 5},
   [82] =
     {field_name, 0},
     {field_number, 3},
@@ -790,11 +790,11 @@ static const TSFieldMapEntry ts_field_map_entries[] = {
   [106] =
     {field_arguments, 3},
     {field_name, 1},
-    {field_returns, 6},
+    {field_throws, 6},
   [109] =
     {field_arguments, 3},
     {field_name, 1},
-    {field_throws, 6},
+    {field_returns, 6},
   [112] =
     {field_annotations, 0},
     {field_name, 1},
@@ -803,11 +803,11 @@ static const TSFieldMapEntry ts_field_map_entries[] = {
   [116] =
     {field_annotations, 0},
     {field_name, 2},
-    {field_returns, 6},
+    {field_throws, 6},
   [119] =
     {field_annotations, 0},
     {field_name, 2},
-    {field_throws, 6},
+    {field_returns, 6},
   [122] =
     {field_annotations, 0},
     {field_arguments, 4},
@@ -821,69 +821,69 @@ static const TSFieldMapEntry ts_field_map_entries[] = {
     {field_values, 5},
   [131] =
     {field_name, 1},
-    {field_returns, 5},
-    {field_throws, 7},
+    {field_returns, 7},
+    {field_throws, 5},
   [134] =
     {field_arguments, 3},
     {field_arguments, 4},
     {field_name, 1},
-    {field_returns, 7},
+    {field_throws, 7},
   [138] =
     {field_arguments, 3},
     {field_arguments, 4},
     {field_name, 1},
-    {field_throws, 7},
+    {field_returns, 7},
   [142] =
     {field_annotations, 0},
     {field_arguments, 4},
     {field_name, 2},
-    {field_returns, 7},
+    {field_throws, 7},
   [146] =
     {field_annotations, 0},
     {field_arguments, 4},
     {field_name, 2},
-    {field_throws, 7},
+    {field_returns, 7},
   [150] =
     {field_arguments, 3},
     {field_name, 1},
-    {field_returns, 6},
-    {field_throws, 8},
+    {field_returns, 8},
+    {field_throws, 6},
   [154] =
     {field_annotations, 0},
     {field_name, 2},
-    {field_returns, 6},
-    {field_throws, 8},
+    {field_returns, 8},
+    {field_throws, 6},
   [158] =
     {field_annotations, 0},
     {field_arguments, 4},
     {field_arguments, 5},
     {field_name, 2},
-    {field_returns, 8},
+    {field_throws, 8},
   [163] =
     {field_annotations, 0},
     {field_arguments, 4},
     {field_arguments, 5},
     {field_name, 2},
-    {field_throws, 8},
+    {field_returns, 8},
   [168] =
     {field_arguments, 3},
     {field_arguments, 4},
     {field_name, 1},
-    {field_returns, 7},
-    {field_throws, 9},
+    {field_returns, 9},
+    {field_throws, 7},
   [173] =
     {field_annotations, 0},
     {field_arguments, 4},
     {field_name, 2},
-    {field_returns, 7},
-    {field_throws, 9},
+    {field_returns, 9},
+    {field_throws, 7},
   [178] =
     {field_annotations, 0},
     {field_arguments, 4},
     {field_arguments, 5},
     {field_name, 2},
-    {field_returns, 8},
-    {field_throws, 10},
+    {field_returns, 10},
+    {field_throws, 8},
 };
 
 static const TSSymbol ts_alias_sequences[PRODUCTION_ID_COUNT][MAX_ALIAS_SEQUENCE_LENGTH] = {
@@ -1284,6 +1284,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead == '!') ADVANCE(106);
       if (lookahead == ')') ADVANCE(105);
       if (lookahead == ',') ADVANCE(104);
+      if (lookahead == '-') ADVANCE(9);
       if (lookahead == '.') ADVANCE(113);
       if (lookahead == '/') ADVANCE(6);
       if (lookahead == ':') ADVANCE(97);
@@ -1292,7 +1293,6 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead == '@') ADVANCE(116);
       if (lookahead == ']') ADVANCE(112);
       if (lookahead == 'l') ADVANCE(19);
-      if (lookahead == 't') ADVANCE(24);
       if (lookahead == '}') ADVANCE(94);
       if (anon_sym_BANG_character_set_1(lookahead)) SKIP(1)
       END_STATE();
@@ -1360,7 +1360,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead != 0) ADVANCE(8);
       END_STATE();
     case 9:
-      if (lookahead == '>') ADVANCE(108);
+      if (lookahead == '>') ADVANCE(109);
       END_STATE();
     case 10:
       if (lookahead == 'a') ADVANCE(22);
@@ -1489,7 +1489,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       if (lookahead == 's') ADVANCE(117);
       END_STATE();
     case 51:
-      if (lookahead == 's') ADVANCE(109);
+      if (lookahead == 's') ADVANCE(108);
       END_STATE();
     case 52:
       if (lookahead == 's') ADVANCE(17);
@@ -1747,10 +1747,10 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
       ACCEPT_TOKEN(anon_sym_func);
       END_STATE();
     case 108:
-      ACCEPT_TOKEN(anon_sym_DASH_GT);
+      ACCEPT_TOKEN(anon_sym_throws);
       END_STATE();
     case 109:
-      ACCEPT_TOKEN(anon_sym_throws);
+      ACCEPT_TOKEN(anon_sym_DASH_GT);
       END_STATE();
     case 110:
       ACCEPT_TOKEN(anon_sym_event);
@@ -2362,8 +2362,8 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
     [anon_sym_RPAREN] = ACTIONS(1),
     [anon_sym_BANG] = ACTIONS(1),
     [anon_sym_func] = ACTIONS(1),
-    [anon_sym_DASH_GT] = ACTIONS(1),
     [anon_sym_throws] = ACTIONS(1),
+    [anon_sym_DASH_GT] = ACTIONS(1),
     [anon_sym_event] = ACTIONS(1),
     [anon_sym_LBRACK] = ACTIONS(1),
     [anon_sym_RBRACK] = ACTIONS(1),
@@ -3466,7 +3466,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(3), 1,
       sym_comment,
     ACTIONS(247), 1,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
     ACTIONS(249), 1,
       anon_sym_DOT,
     ACTIONS(251), 1,
@@ -3512,7 +3512,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(251), 1,
       anon_sym_QMARK,
     ACTIONS(259), 1,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
     STATE(144), 1,
       sym__semicolon,
     ACTIONS(261), 2,
@@ -3540,7 +3540,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(251), 1,
       anon_sym_QMARK,
     ACTIONS(265), 1,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
     STATE(148), 1,
       sym__semicolon,
     ACTIONS(267), 2,
@@ -3581,7 +3581,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(251), 1,
       anon_sym_QMARK,
     ACTIONS(275), 1,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
     STATE(121), 1,
       sym__semicolon,
     ACTIONS(277), 2,
@@ -3595,7 +3595,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(251), 1,
       anon_sym_QMARK,
     ACTIONS(279), 1,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
     STATE(147), 1,
       sym__semicolon,
     ACTIONS(281), 2,
@@ -3636,7 +3636,7 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(251), 1,
       anon_sym_QMARK,
     ACTIONS(289), 1,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
     STATE(134), 1,
       sym__semicolon,
     ACTIONS(291), 2,
@@ -3684,9 +3684,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(3), 1,
       sym_comment,
     ACTIONS(299), 1,
-      anon_sym_DASH_GT,
-    ACTIONS(301), 1,
       anon_sym_throws,
+    ACTIONS(301), 1,
+      anon_sym_DASH_GT,
     STATE(135), 1,
       sym__semicolon,
     ACTIONS(303), 2,
@@ -3696,9 +3696,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(3), 1,
       sym_comment,
     ACTIONS(305), 1,
-      anon_sym_DASH_GT,
-    ACTIONS(307), 1,
       anon_sym_throws,
+    ACTIONS(307), 1,
+      anon_sym_DASH_GT,
     STATE(139), 1,
       sym__semicolon,
     ACTIONS(309), 2,
@@ -3778,7 +3778,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_comment,
     ACTIONS(76), 5,
       sym__automatic_semicolon,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
       anon_sym_DOT,
       anon_sym_QMARK,
       anon_sym_SEMI,
@@ -3786,9 +3786,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(3), 1,
       sym_comment,
     ACTIONS(321), 1,
-      anon_sym_DASH_GT,
-    ACTIONS(323), 1,
       anon_sym_throws,
+    ACTIONS(323), 1,
+      anon_sym_DASH_GT,
     STATE(140), 1,
       sym__semicolon,
     ACTIONS(325), 2,
@@ -3810,7 +3810,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_comment,
     ACTIONS(72), 5,
       sym__automatic_semicolon,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
       anon_sym_DOT,
       anon_sym_QMARK,
       anon_sym_SEMI,
@@ -3866,7 +3866,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_comment,
     ACTIONS(74), 5,
       sym__automatic_semicolon,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
       anon_sym_DOT,
       anon_sym_QMARK,
       anon_sym_SEMI,
@@ -3898,9 +3898,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(3), 1,
       sym_comment,
     ACTIONS(343), 1,
-      anon_sym_DASH_GT,
-    ACTIONS(345), 1,
       anon_sym_throws,
+    ACTIONS(345), 1,
+      anon_sym_DASH_GT,
     STATE(127), 1,
       sym__semicolon,
     ACTIONS(347), 2,
@@ -3910,9 +3910,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(3), 1,
       sym_comment,
     ACTIONS(349), 1,
-      anon_sym_DASH_GT,
-    ACTIONS(351), 1,
       anon_sym_throws,
+    ACTIONS(351), 1,
+      anon_sym_DASH_GT,
     STATE(159), 1,
       sym__semicolon,
     ACTIONS(353), 2,
@@ -3935,7 +3935,7 @@ static const uint16_t ts_small_parse_table[] = {
       sym_comment,
     ACTIONS(70), 5,
       sym__automatic_semicolon,
-      anon_sym_throws,
+      anon_sym_DASH_GT,
       anon_sym_DOT,
       anon_sym_QMARK,
       anon_sym_SEMI,
@@ -3955,9 +3955,9 @@ static const uint16_t ts_small_parse_table[] = {
     ACTIONS(3), 1,
       sym_comment,
     ACTIONS(359), 1,
-      anon_sym_DASH_GT,
-    ACTIONS(361), 1,
       anon_sym_throws,
+    ACTIONS(361), 1,
+      anon_sym_DASH_GT,
     STATE(151), 1,
       sym__semicolon,
     ACTIONS(363), 2,

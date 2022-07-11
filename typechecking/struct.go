@@ -3,8 +3,9 @@ package typechecking
 import "fmt"
 
 type Struct struct {
-	Name      string
-	DefinedAt Path
+	Name          string
+	DefinedAt     Path
+	Documentation string
 
 	Fields []Field
 }
@@ -32,8 +33,9 @@ func (s Struct) String() string {
 }
 
 type Field struct {
-	Name      string
-	DefinedAt Path
+	Name          string
+	Documentation string
+	DefinedAt     Path
 
 	Type Type
 }

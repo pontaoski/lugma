@@ -188,6 +188,7 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 	for _, item := range tree.Structs {
 		var s Struct
 		s.Name = item.Name
+		s.Documentation = item.Documentation
 		s.DefinedAt = m.DefinedAt.Appended(item.Name)
 
 		fields, err := fieldList(item.Fields, s.DefinedAt, ctx)
@@ -203,11 +204,13 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 		var e Enum
 		e.Name = item.Name
 		e.DefinedAt = m.DefinedAt.Appended(item.Name)
+		e.Documentation = item.Documentation
 
 		for _, cas := range item.Cases {
 			var c Case
 			c.Name = cas.Name
 			c.DefinedAt = e.DefinedAt.Appended(cas.Name)
+			c.Documentation = cas.Documentation
 
 			args, err := argList(cas.Values, c.DefinedAt, ctx)
 			if err != nil {
@@ -226,10 +229,12 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 		fs.Name = item.Name
 		fs.Optional = item.Optional
 		fs.DefinedAt = m.DefinedAt.Appended(item.Name)
+		fs.Documentation = item.Documentation
 
 		for _, flag := range item.Flags {
 			var f Flag
 			f.Name = flag.Name
+			f.Documentation = flag.Documentation
 
 			fs.Flags = append(fs.Flags, f)
 		}
@@ -241,12 +246,15 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 		var p Protocol
 		p.Name = item.Name
 		p.DefinedAt = m.DefinedAt.Appended(item.Name)
+		p.Documentation = item.Documentation
 
 		for _, fn := range item.Functions {
 			var f Func
 
 			f.Name = fn.Name
 			f.DefinedAt = p.DefinedAt.Appended(f.Name)
+			f.Documentation = fn.Documentation
+
 			args, err := argList(fn.Arguments, f.DefinedAt, ctx)
 			if err != nil {
 				return nil, err
@@ -267,6 +275,7 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 			var e Event
 			e.Name = ev.Name
 			e.DefinedAt = p.DefinedAt.Appended(e.Name)
+			e.Documentation = ev.Documentation
 
 			args, err := argList(ev.Arguments, e.DefinedAt, ctx)
 			if err != nil {

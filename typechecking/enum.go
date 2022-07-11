@@ -3,8 +3,9 @@ package typechecking
 import "fmt"
 
 type Enum struct {
-	Name      string
-	DefinedAt Path
+	Name          string
+	DefinedAt     Path
+	Documentation string
 
 	Cases []Case
 }
@@ -40,8 +41,9 @@ func (e Enum) Simple() bool {
 }
 
 type Case struct {
-	Name      string
-	DefinedAt Path
+	Name          string
+	DefinedAt     Path
+	Documentation string
 
 	Fields []Field
 }

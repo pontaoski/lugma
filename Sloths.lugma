@@ -1,0 +1,39 @@
+/**
+  A sloth.
+*/
+struct Sloth {
+  /**
+    The sloth's name.
+  */
+  let name: String
+}
+
+struct Food {
+  let energy: Int64
+}
+
+enum Error {
+  case gay
+}
+
+protocol Sloths {
+  /**
+
+    Eat the provided specialty sloth food.
+
+    Sloths love to eat while they move very slowly through their rainforest
+    habitats. They are especially happy to consume leaves and twigs, which they
+    digest over long periods of time, mostly while they sleep.
+
+    When they eat food, a sloth's energy increases by the food's energy.
+
+    - Parameters:
+      - food: The food for the sloth to eat
+      - quantity: The quantity of the food for the sloth to eat
+
+    - Returns: The sloth's energy level after eating
+
+    - Throws: `Error.gay` if the sloth is too gay to eat food
+  */
+  func eat(food: Food, quantity: Int64) throws Error -> Int64
+}

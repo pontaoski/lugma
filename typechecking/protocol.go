@@ -1,8 +1,9 @@
 package typechecking
 
 type Protocol struct {
-	Name      string
-	DefinedAt Path
+	Name          string
+	Documentation string
+	DefinedAt     Path
 
 	Funcs  []Func
 	Events []Event
@@ -29,8 +30,9 @@ func (p Protocol) Child(name string) Object {
 }
 
 type Func struct {
-	Name      string
-	DefinedAt Path
+	Name          string
+	Documentation string
+	DefinedAt     Path
 
 	Arguments []Field
 
@@ -45,8 +47,9 @@ func (f Func) Path() Path {
 }
 
 type Event struct {
-	Name      string
-	DefinedAt Path
+	Name          string
+	Documentation string
+	DefinedAt     Path
 
 	Arguments []Field
 }

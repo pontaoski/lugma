@@ -3,8 +3,9 @@ package typechecking
 import "fmt"
 
 type Flagset struct {
-	Name      string
-	DefinedAt Path
+	Name          string
+	Documentation string
+	DefinedAt     Path
 
 	Optional bool
 	Flags    []Flag
@@ -29,5 +30,6 @@ func (Flagset) Keyable() bool {
 }
 
 type Flag struct {
-	Name string
+	Name          string
+	Documentation string
 }
