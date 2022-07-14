@@ -6,6 +6,7 @@ export interface Stream {
     unon(item: number): void
     on(event: string, callback: (body: any) => void): number
     onClose(callback: () => void): number
+    send(signal: string, body: any): void
 }
 
 export class WebSocketStream implements Stream {
@@ -83,6 +84,12 @@ export class WebSocketStream implements Stream {
         this.numbersToEvents.set(this.callbackNumber, "on closed")
 
         return this.callbackNumber
+    }
+    send(signal: string, body: any): void {
+        this.socket.send(JSON.stringify({
+            "type": signal,
+            "content": body,
+        }))
     }
 }
 export class HTTPSTransport implements Transport<Headers> {

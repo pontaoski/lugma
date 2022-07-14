@@ -285,6 +285,20 @@ func (ctx *Context) Module(tree *ast.File, path string) (*Module, error) {
 
 			p.Events = append(p.Events, e)
 		}
+		for _, sig := range item.Signals {
+			var s Signal
+			s.Name = sig.Name
+			s.DefinedAt = p.DefinedAt.Appended(s.Name)
+			s.Documentation = sig.Documentation
+
+			args, err := argList(sig.Arguments, s.DefinedAt, ctx)
+			if err != nil {
+				return nil, err
+			}
+			s.Arguments = args
+
+			p.Signals = append(p.Signals, s)
+		}
 
 		m.Protocols = append(m.Protocols, p)
 		ctx.Environment.Items[item.Name] = p

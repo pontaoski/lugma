@@ -1,29 +1,28 @@
-use serde;
-use futures;
 use async_trait::async_trait;
 
 #[cfg(feature = "http_impl")]
 pub mod http;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
+pub enum StreamError<T> {
+    SelfError(T),
+    SerdeError(serde_json::Error),
 }
 
 #[async_trait]
-trait Stream {
+pub trait Stream {
     type StreamError;
 
-    async fn stream_for<T: serde::de::DeserializeOwned>(&mut self, event: String) -> std::pin::Pin<Box<dyn futures::stream::Stream<Item = T>>>;
-    async fn sink_for<T: serde::Serialize>(&mut self, signal: String) -> std::pin::Pin<Box<dyn futures::sink::Sink<T, Error = Self::StreamError>>>;
+    async fn stream_for<'a, T: serde::de::DeserializeOwned + Clone + ToOwned<Owned = T>>(&'a mut self, event: String) -> Box<dyn futures::stream::Stream<Item = std::borrow::Cow<T>> + 'a>;
+    async fn send<'a, T: serde::Serialize + Clone + ToOwned<Owned = T> + Sync>(&'a mut self, signal: String, item: &T) -> Result<(), StreamError<Self::StreamError>>;
+}
+
+pub enum TransportError<T> {
+    SelfError(T),
+    SerdeError(serde_json::Error),
 }
 
 #[async_trait]
-trait Transport {
+pub trait Transport {
     type Extra;
     type Stream: Stream;
     type TransportError;
@@ -32,6 +31,6 @@ trait Transport {
         In: serde::Serialize + std::marker::Send,
         Out: serde::de::DeserializeOwned,
         Error: serde::de::DeserializeOwned
-    >(&mut self, endpoint: String, body: In, extra: Self::Extra) -> Result<Result<Out, Error>, Self::TransportError>;
-    async fn open_stream(&mut self, endpoint: String, extra: Self::Extra) -> Result<Self::Stream, <<Self as Transport>::Stream as Stream>::StreamError>;
+    >(&mut self, endpoint: String, body: In, extra: Self::Extra) -> Result<Result<Out, Error>, TransportError<Self::TransportError>>;
+    async fn open_stream(&mut self, endpoint: String, extra: Self::Extra) -> Result<Self::Stream, TransportError<Self::TransportError>>;
 }

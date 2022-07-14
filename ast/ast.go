@@ -153,6 +153,7 @@ type Protocol struct {
 
 	Functions []Function
 	Events    []Event
+	Signals   []Signal
 	Span      Span
 }
 
@@ -168,6 +169,8 @@ func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
 			p.Functions = append(p.Functions, FunctionFromNode(child, input))
 		case "event_declaration":
 			p.Events = append(p.Events, EventFromNode(child, input))
+		case "signal_declaration":
+			p.Signals = append(p.Signals, SignalFromNode(child, input))
 		case "identifier", "comment":
 			continue
 		default:
@@ -258,6 +261,34 @@ func EventFromNode(n *sitter.Node, input []byte) Event {
 	}
 
 	return e
+}
+
+type Signal struct {
+	Name          string
+	Documentation string
+
+	Arguments []Argument
+	Span      Span
+}
+
+func SignalFromNode(n *sitter.Node, input []byte) Signal {
+	var s Signal
+	s.Span = SpanFromNode(n)
+	s.Documentation = DocumentationFromNode(n, input)
+
+	s.Name = n.ChildByFieldName("name").Content(input)
+
+	for i := 0; i < int(n.NamedChildCount()); i++ {
+		child := n.NamedChild(i)
+		switch child.Type() {
+		case "arg":
+			s.Arguments = append(s.Arguments, ArgumentFromNode(child, input))
+		default:
+			continue
+		}
+	}
+
+	return s
 }
 
 type Struct struct {

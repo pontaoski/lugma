@@ -5,8 +5,9 @@ type Protocol struct {
 	Documentation string
 	DefinedAt     Path
 
-	Funcs  []Func
-	Events []Event
+	Funcs   []Func
+	Events  []Event
+	Signals []Signal
 }
 
 var _ Object = Protocol{}
@@ -24,6 +25,11 @@ func (p Protocol) Child(name string) Object {
 	for _, ev := range p.Events {
 		if ev.Name == name {
 			return ev
+		}
+	}
+	for _, sig := range p.Signals {
+		if sig.Name == name {
+			return sig
 		}
 	}
 	return nil
@@ -57,5 +63,19 @@ type Event struct {
 func (f Event) isObject()                {}
 func (f Event) Child(name string) Object { return nil }
 func (f Event) Path() Path {
+	return f.DefinedAt
+}
+
+type Signal struct {
+	Name          string
+	Documentation string
+	DefinedAt     Path
+
+	Arguments []Field
+}
+
+func (f Signal) isObject()                {}
+func (f Signal) Child(name string) Object { return nil }
+func (f Signal) Path() Path {
 	return f.DefinedAt
 }

@@ -24,4 +24,6 @@ protocol Chat {
   func SendMessage(message: Message, homosexuality: Message) throws Error
 
   event MessageReceived(message: Message)
+
+  signal SubscribeToGuild(guildID: UInt64)
 }
