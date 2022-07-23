@@ -18,6 +18,7 @@ import (
 
 type Workspace struct {
 	Dir          string
+	Workspace    *typechecking.Workspace
 	Module       *ModuleDefinition
 	KnownModules map[string]*typechecking.Module
 }
@@ -57,7 +58,13 @@ func LoadWorkspaceFrom(dir string) (*Workspace, error) {
 		return nil, err
 	}
 
-	return &Workspace{dir, mod, map[string]*typechecking.Module{}}, nil
+	return &Workspace{dir, &typechecking.Workspace{
+		Name:      mod.Name,
+		DefinedAt: typechecking.Path{},
+		InEnv:     nil,
+
+		Modules: map[string]*typechecking.Module{},
+	}, mod, map[string]*typechecking.Module{}}, nil
 }
 
 func (m *Workspace) ModuleFor(context *typechecking.Context, path string, from string) (*typechecking.Module, error) {
@@ -98,11 +105,12 @@ func (m *Workspace) GenerateModules() error {
 			astFiles = append(astFiles, &fileAST)
 		}
 
-		module, err := ctx.MultiFileModule(astFiles, m.Module.Name+"/"+product.Name)
+		module, err := ctx.MultiFileModule(astFiles, m.Workspace, m.Workspace.Name+"/"+product.Name)
 		if err != nil {
 			return err
 		}
 
+		m.Workspace.Modules[product.Name] = module
 		m.KnownModules[product.Name] = module
 	}
 

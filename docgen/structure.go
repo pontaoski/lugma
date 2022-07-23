@@ -81,6 +81,10 @@ func (item Item) renderTableOfContentsTo(sb *strings.Builder, currently typechec
 			sb.WriteString(`<span class="codicon codicon-symbol-method symbol-method"></span>`)
 		case *typechecking.Field:
 			sb.WriteString(`<span class="codicon codicon-symbol-field symbol-field"></span>`)
+		case *typechecking.Module:
+			sb.WriteString(`<span class="codicon codicon-package symbol-package"></span>`)
+		case *typechecking.Workspace:
+			sb.WriteString(`<span class="codicon codicon-symbol-namespace symbol-workspace"></span>`)
 		}
 		sb.WriteString(fmt.Sprintf(`%s</a>`, item.Object.ObjectName()))
 	}
@@ -409,8 +413,21 @@ func DefaultStructureFor(object typechecking.Object) Item {
 		return DefaultStructureForProtocol(t)
 	case *typechecking.Flagset:
 		return DefaultStructureForFlagset(t)
+	case *typechecking.Workspace:
+		return DefaultStructureForWorkspace(t)
 	default:
 		panic("bad item type")
+	}
+}
+
+func DefaultStructureForWorkspace(m *typechecking.Workspace) Item {
+	moduleSection := Section{Title: "Modules"}
+	for _, mod := range m.Modules {
+		moduleSection.Items = append(moduleSection.Items, DefaultStructureForModule(mod))
+	}
+	return Item{
+		Object:   m,
+		Children: []Section{moduleSection},
 	}
 }
 
@@ -435,7 +452,7 @@ func DefaultStructureForModule(m *typechecking.Module) Item {
 		flagsetSection.Items = append(flagsetSection.Items, itemOnly(StructureFor(flagset)))
 	}
 
-	ret := Item{}
+	ret := Item{Object: m}
 
 	if len(structSection.Items) > 0 {
 		ret.Children = append(ret.Children, structSection)

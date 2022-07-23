@@ -146,7 +146,7 @@ func breadcrumbsFor(item typechecking.Object) string {
 	return strings.Join(s, ` <span class="px-2">/</span> `)
 }
 
-func renderObject(outdir string, mod *typechecking.Module, item typechecking.Object, docs *ast.ItemDocumentation) error {
+func renderObject(outdir string, workspace *typechecking.Workspace, item typechecking.Object, docs *ast.ItemDocumentation) error {
 	var res = &resolver{}
 	var gm = goldmark.New(
 		goldmark.WithExtensions(
@@ -161,7 +161,7 @@ func renderObject(outdir string, mod *typechecking.Module, item typechecking.Obj
 
 	var tableOfContents strings.Builder
 
-	DefaultStructureForModule(mod).renderTableOfContentsTo(&tableOfContents, item)
+	DefaultStructureForWorkspace(workspace).Children[0].renderTableOfContentsTo(&tableOfContents, item)
 
 	args.TableOfContents = template.HTML(tableOfContents.String())
 	args.Breadcrumbs = template.HTML(breadcrumbsFor(item))
@@ -318,64 +318,64 @@ var Command = &cli.Command{
 			mod := w.KnownModules[prod.Name]
 
 			for _, flagset := range mod.Flagsets {
-				err = renderObject(outdir, mod, flagset, flagset.Documentation)
+				err = renderObject(outdir, mod.InWorkspace, flagset, flagset.Documentation)
 				if err != nil {
 					return err
 				}
 
 				for _, flag := range flagset.Flags {
-					err = renderObject(outdir, mod, flag, flag.Documentation)
+					err = renderObject(outdir, mod.InWorkspace, flag, flag.Documentation)
 					if err != nil {
 						return err
 					}
 				}
 			}
 			for _, enum := range mod.Enums {
-				err = renderObject(outdir, mod, enum, enum.Documentation)
+				err = renderObject(outdir, mod.InWorkspace, enum, enum.Documentation)
 				if err != nil {
 					return err
 				}
 
 				for _, cas := range enum.Cases {
-					err = renderObject(outdir, mod, cas, cas.Documentation)
+					err = renderObject(outdir, mod.InWorkspace, cas, cas.Documentation)
 					if err != nil {
 						return err
 					}
 				}
 			}
 			for _, strct := range mod.Structs {
-				err = renderObject(outdir, mod, strct, strct.Documentation)
+				err = renderObject(outdir, mod.InWorkspace, strct, strct.Documentation)
 				if err != nil {
 					return err
 				}
 
 				for _, field := range strct.Fields {
-					err = renderObject(outdir, mod, field, field.Documentation)
+					err = renderObject(outdir, mod.InWorkspace, field, field.Documentation)
 					if err != nil {
 						return err
 					}
 				}
 			}
 			for _, protocol := range mod.Protocols {
-				err = renderObject(outdir, mod, protocol, protocol.Documentation)
+				err = renderObject(outdir, mod.InWorkspace, protocol, protocol.Documentation)
 				if err != nil {
 					return err
 				}
 
 				for _, fn := range protocol.Funcs {
-					err = renderObject(outdir, mod, fn, fn.Documentation)
+					err = renderObject(outdir, mod.InWorkspace, fn, fn.Documentation)
 					if err != nil {
 						return err
 					}
 				}
 				for _, signal := range protocol.Signals {
-					err = renderObject(outdir, mod, signal, signal.Documentation)
+					err = renderObject(outdir, mod.InWorkspace, signal, signal.Documentation)
 					if err != nil {
 						return err
 					}
 				}
 				for _, event := range protocol.Events {
-					err = renderObject(outdir, mod, event, event.Documentation)
+					err = renderObject(outdir, mod.InWorkspace, event, event.Documentation)
 					if err != nil {
 						return err
 					}

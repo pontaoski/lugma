@@ -1,9 +1,36 @@
 package typechecking
 
-type Module struct {
+type Workspace struct {
 	Name      string
 	DefinedAt Path
 	InEnv     *Environment
+
+	Modules map[string]*Module
+}
+
+func (w *Workspace) Child(name string) Object {
+	return w.Modules[name]
+}
+func (w *Workspace) Env() *Environment {
+	return w.InEnv
+}
+func (w *Workspace) ObjectName() string {
+	return w.Name
+}
+func (*Workspace) Parent() Object {
+	return nil
+}
+func (w *Workspace) Path() Path {
+	return w.DefinedAt
+}
+func (*Workspace) isObject() {
+}
+
+type Module struct {
+	Name        string
+	DefinedAt   Path
+	InEnv       *Environment
+	InWorkspace *Workspace
 
 	Imports map[string]*Module
 
@@ -26,7 +53,7 @@ func (m Module) Path() Path {
 	return m.DefinedAt
 }
 func (m Module) Parent() Object {
-	return nil
+	return m.InWorkspace
 }
 func (m Module) Child(name string) Object {
 	for _, strct := range m.Structs {

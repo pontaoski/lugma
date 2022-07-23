@@ -183,7 +183,7 @@ func (ctx *Context) ModuleFor(path, from string) (*Module, error) {
 	return module, nil
 }
 
-func (ctx *Context) MultiFileModule(trees []*ast.File, modpath string) (*Module, error) {
+func (ctx *Context) MultiFileModule(trees []*ast.File, w *Workspace, modpath string) (*Module, error) {
 	m := &Module{}
 	m.DefinedAt = Path{modpath, ""}
 	m.Name = path.Base(modpath)
@@ -193,7 +193,7 @@ func (ctx *Context) MultiFileModule(trees []*ast.File, modpath string) (*Module,
 
 	megaFile := ast.CombineFiles(trees...)
 
-	err := ctx.doSingleModule(m, megaFile)
+	err := ctx.doSingleModule(m, w, megaFile)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,8 @@ func (ctx *Context) MultiFileModule(trees []*ast.File, modpath string) (*Module,
 	return m, nil
 }
 
-func (ctx *Context) doSingleModule(m *Module, tree *ast.File) error {
+func (ctx *Context) doSingleModule(m *Module, w *Workspace, tree *ast.File) error {
+	m.InWorkspace = w
 	for _, imports := range tree.Imports {
 		module, err := ctx.ModuleFor(imports.Path, m.DefinedAt.ModulePath)
 		if err != nil {
@@ -329,7 +330,7 @@ func (ctx *Context) Module(tree *ast.File, modpath string) (*Module, error) {
 	ctx.PushEnvironment()
 	defer ctx.PopEnvironment()
 
-	err := ctx.doSingleModule(m, tree)
+	err := ctx.doSingleModule(m, nil, tree)
 	if err != nil {
 		return nil, err
 	}
