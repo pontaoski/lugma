@@ -243,6 +243,20 @@ func renderObject(outdir string, mod *typechecking.Module, item typechecking.Obj
 		}
 
 		args.Main = template.HTML(mainBuilder.String())
+	} else {
+		var mainBuilder strings.Builder
+
+		mainBuilder.WriteString(fmt.Sprintf("<h1>%s</h1>", item.ObjectName()))
+
+		mainBuilder.WriteString(fmt.Sprintf(`<pre><code>%s</code></pre>`, HTMLSignatureFor(item, item)))
+
+		// structural objects
+		if IsStructuralObject(item) {
+			nodes, item := StructureFor(item)
+			renderOnPageStructureTo(&mainBuilder, nodes, item)
+		}
+
+		args.Main = template.HTML(mainBuilder.String())
 	}
 
 	err := os.MkdirAll(path.Join(outdir, item.Path().String()), 0750)

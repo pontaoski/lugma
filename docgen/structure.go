@@ -362,13 +362,19 @@ func HTMLSignatureFor(object typechecking.Object, currently typechecking.Object)
 	case *typechecking.Event:
 		return hcode(hkeyword("event") + " " + hitem(object.ObjectName()) + hparens(hfields(t.Arguments)))
 	case *typechecking.Case:
-		return hcode(hkeyword("case") + " " + hitem(object.ObjectName()) + hparens(hfields(t.Fields)))
+		inner := hkeyword("case") + " " + hitem(object.ObjectName())
+		if len(t.Fields) > 0 {
+			inner += hparens(hfields(t.Fields))
+		}
+		return hcode(inner)
 	case *typechecking.Field:
-		return hcode(hkeyword("let") + " " + hitem(object.ObjectName()))
+		return hcode(hkeyword("let") + " " + fmt.Sprintf(`<span class="code-item-name">%s</span>: <span class="code-type">%s</span>`, t.Name, t.Type.String()))
 	case *typechecking.Struct:
 		return hcode(hkeyword("struct") + " " + hitem(object.ObjectName()))
 	case *typechecking.Protocol:
 		return hcode(hkeyword("protocol") + " " + hitem(object.ObjectName()))
+	case *typechecking.Enum:
+		return hcode(hkeyword("enum") + " " + hitem(object.ObjectName()))
 	default:
 		panic("bad object type " + reflect.TypeOf(object).String())
 	}
