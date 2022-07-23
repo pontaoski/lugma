@@ -244,40 +244,85 @@ func flattenMap(item []ast.Node) []ast.Node {
 	return ret
 }
 
-func StructureFor(object typechecking.Object) Item {
+func itemOnly(_ []ast.Node, item Item) Item {
+	return item
+}
+
+func StructureFor(object typechecking.Object) ([]ast.Node, Item) {
 	if docs := DocumentationItemFor(object); docs != nil && docs.HasCustomStructure {
 		return CustomStructureFor(object, docs)
 	}
 
-	return DefaultStructureFor(object)
+	return nil, DefaultStructureFor(object)
 }
 
-func CustomStructureFor(object typechecking.Object, docs *lugmaast.ItemDocumentation) Item {
+type StructuralList struct {
+	ast.BaseBlock
+
+	SymbolLinks []*extension.SymbolLinkNode
+}
+
+// Dump implements ast.Node
+func (n *StructuralList) Dump(source []byte, level int) {
+	ast.DumpHelper(n, source, level, map[string]string{}, nil)
+}
+
+func (n *StructuralList) Kind() ast.NodeKind {
+	return StructuralListKind
+}
+
+var StructuralListKind = ast.NewNodeKind("StructuralList")
+
+func transformIntoStructureList(node ast.Node) *StructuralList {
+	ret := &StructuralList{}
+	if node.Kind() != ast.KindList {
+		return nil
+	}
+	ret.BaseNode = node.(*ast.List).BaseNode
+
+	for item := node.FirstChild(); item != nil; item = item.NextSibling() {
+		if item.Kind() != ast.KindListItem {
+			return nil
+		}
+		if item.ChildCount() != 1 {
+			return nil
+		}
+		if item.FirstChild().ChildCount() != 1 {
+			return nil
+		}
+		if item.FirstChild().FirstChild().Kind() != extension.SymbolLinkKind {
+			return nil
+		}
+		ret.SymbolLinks = append(ret.SymbolLinks, item.FirstChild().FirstChild().(*extension.SymbolLinkNode))
+	}
+
+	return ret
+}
+
+func CustomStructureFor(object typechecking.Object, docs *lugmaast.ItemDocumentation) ([]ast.Node, Item) {
 	var secs []Section
 	var currentlyBuilding Section
-	for _, item := range flattenMap(docs.CustomStructure) {
+	var nodes []ast.Node
+
+	for _, item := range docs.CustomStructure {
 		if item.Kind() == ast.KindHeading {
 			if len(currentlyBuilding.Items) != 0 {
 				secs = append(secs, currentlyBuilding)
 				currentlyBuilding = Section{}
 			}
 			currentlyBuilding.Title = string(item.Text(docs.Source))
-		} else if item.Kind() == extension.SymbolLinkKind {
-			name := string(item.(*extension.SymbolLinkNode).Symbol)
-			obj := object.Child(name)
-			if obj == nil {
-				panic("unexpectedly null object " + name)
-			}
-			currentlyBuilding.Items = append(currentlyBuilding.Items, Item{
-				Object: obj,
-			})
+			nodes = append(nodes, item)
+		} else if transformed := transformIntoStructureList(item); transformed != nil {
+			nodes = append(nodes, transformed)
+		} else {
+			nodes = append(nodes, item)
 		}
 	}
 	if len(currentlyBuilding.Items) != 0 {
 		secs = append(secs, currentlyBuilding)
 		currentlyBuilding = Section{}
 	}
-	return Item{Object: object, Children: secs}
+	return nodes, Item{Object: object, Children: secs}
 }
 
 func hkeyword(s string) string {
@@ -366,22 +411,22 @@ func DefaultStructureFor(object typechecking.Object) Item {
 func DefaultStructureForModule(m *typechecking.Module) Item {
 	structSection := Section{Title: "Structs"}
 	for _, strukt := range m.Structs {
-		structSection.Items = append(structSection.Items, StructureFor(strukt))
+		structSection.Items = append(structSection.Items, itemOnly(StructureFor(strukt)))
 	}
 
 	enumSection := Section{Title: "Enums"}
 	for _, enum := range m.Enums {
-		enumSection.Items = append(enumSection.Items, StructureFor(enum))
+		enumSection.Items = append(enumSection.Items, itemOnly(StructureFor(enum)))
 	}
 
 	protocolSection := Section{Title: "Protocols"}
 	for _, protocol := range m.Protocols {
-		protocolSection.Items = append(protocolSection.Items, StructureFor(protocol))
+		protocolSection.Items = append(protocolSection.Items, itemOnly(StructureFor(protocol)))
 	}
 
 	flagsetSection := Section{Title: "Flagsets"}
 	for _, flagset := range m.Flagsets {
-		flagsetSection.Items = append(flagsetSection.Items, StructureFor(flagset))
+		flagsetSection.Items = append(flagsetSection.Items, itemOnly(StructureFor(flagset)))
 	}
 
 	ret := Item{}

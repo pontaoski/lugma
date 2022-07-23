@@ -76,16 +76,48 @@ func (r *resolver) ResolveSymbol(sym *extension.SymbolLinkNode) (destination []b
 var _ extension.SymbolResolver = &resolver{}
 
 // only a flat first-level view, not a tree
-func renderOnPageStructureTo(sb *strings.Builder, structure Item) {
+func renderOnPageStructureTo(sb *strings.Builder, nodes []gmast.Node, structure Item) {
 	sb.WriteString(`<h2>Topics</h2>`)
 
-	for _, section := range structure.Children {
-		sb.WriteString(fmt.Sprintf(`<h3>%s</h3>`, section.Title))
-		for _, item := range section.Items {
-			url := resolveURL(item.Object, structure.Object.Path().String())
-			sig := HTMLSignatureFor(item.Object, structure.Object)
-			sb.WriteString(fmt.Sprintf(`<h4><a class="code" href="%s">%s</a></h4>`, url, sig))
-			sb.WriteString(fmt.Sprintf(`<p class="pl-6">%s</p>`, SummaryFor(item.Object)))
+	if len(nodes) > 0 {
+		var res = &resolver{}
+		var gm = goldmark.New(
+			goldmark.WithExtensions(
+				&extension.SymbolLinkExtender{Resolver: res},
+			),
+			goldmark.WithParser(
+				goldmark.DefaultParser(),
+			),
+		)
+		docs := DocumentationItemFor(structure.Object)
+
+		for _, node := range nodes {
+			if v, ok := node.(*StructuralList); ok {
+				for _, item := range v.SymbolLinks {
+					obj := structure.Object
+					child := obj.Child(string(item.Symbol))
+					if child != nil {
+						url := resolveURL(child, structure.Object.Path().String())
+						sig := HTMLSignatureFor(child, structure.Object)
+						sb.WriteString(fmt.Sprintf(`<h4><a class="code" href="%s">%s</a></h4>`, url, sig))
+						sb.WriteString(fmt.Sprintf(`<p class="pl-6">%s</p>`, SummaryFor(child)))
+					} else {
+						sb.WriteString(`bad link`)
+					}
+				}
+			} else {
+				gm.Renderer().Render(sb, docs.Source, node)
+			}
+		}
+	} else {
+		for _, section := range structure.Children {
+			sb.WriteString(fmt.Sprintf(`<h3>%s</h3>`, section.Title))
+			for _, item := range section.Items {
+				url := resolveURL(item.Object, structure.Object.Path().String())
+				sig := HTMLSignatureFor(item.Object, structure.Object)
+				sb.WriteString(fmt.Sprintf(`<h4><a class="code" href="%s">%s</a></h4>`, url, sig))
+				sb.WriteString(fmt.Sprintf(`<p class="pl-6">%s</p>`, SummaryFor(item.Object)))
+			}
 		}
 	}
 }
@@ -174,7 +206,8 @@ func renderObject(outdir string, mod *typechecking.Module, item typechecking.Obj
 
 		// structural objects
 		if IsStructuralObject(item) {
-			renderOnPageStructureTo(&mainBuilder, StructureFor(item))
+			nodes, item := StructureFor(item)
+			renderOnPageStructureTo(&mainBuilder, nodes, item)
 		}
 
 		// function-likes

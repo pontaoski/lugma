@@ -107,6 +107,9 @@ func FromDocumentationComment(comment string, isMethod bool) *ItemDocumentation 
 		} else if h, ok := i.(*ast.Heading); ok && h.Level == 1 && string(h.Text(source)) == "Topics" {
 			doc.HasCustomStructure = true
 		} else if doc.HasCustomStructure {
+			if i.Kind() == ast.KindHeading {
+				i.(*ast.Heading).Level += 1
+			}
 			doc.CustomStructure = append(doc.CustomStructure, i)
 		} else if i.Kind() == ast.KindHeading {
 			i.(*ast.Heading).Level += 1
