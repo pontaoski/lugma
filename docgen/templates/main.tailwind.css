@@ -57,7 +57,7 @@ aside.toc h3 {
     @apply py-1 items-center;
 }
 ul .depth-spacer {
-    @apply pl-2;
+    @apply pl-4;
 }
 ul ul .depth-spacer {
     @apply pl-8;
