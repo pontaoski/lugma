@@ -303,6 +303,20 @@ func transformIntoStructureList(node ast.Node) *StructuralList {
 	return ret
 }
 
+func getItemsFromStructuralList(object typechecking.Object, s *StructuralList) []Item {
+	var ret []Item
+	for _, i := range s.SymbolLinks {
+		e := object.Child(string(i.Symbol))
+		if e == nil {
+			continue
+		}
+		ret = append(ret, Item{
+			Object: e,
+		})
+	}
+	return ret
+}
+
 func CustomStructureFor(object typechecking.Object, docs *lugmaast.ItemDocumentation) ([]ast.Node, Item) {
 	var secs []Section
 	var currentlyBuilding Section
@@ -318,6 +332,7 @@ func CustomStructureFor(object typechecking.Object, docs *lugmaast.ItemDocumenta
 			nodes = append(nodes, item)
 		} else if transformed := transformIntoStructureList(item); transformed != nil {
 			nodes = append(nodes, transformed)
+			currentlyBuilding.Items = append(currentlyBuilding.Items, getItemsFromStructuralList(object, transformed)...)
 		} else {
 			nodes = append(nodes, item)
 		}
