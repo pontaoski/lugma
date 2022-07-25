@@ -85,6 +85,8 @@ func (item Item) renderTableOfContentsTo(sb *strings.Builder, currently typechec
 			sb.WriteString(`<span class="codicon codicon-package symbol-package"></span>`)
 		case *typechecking.Workspace:
 			sb.WriteString(`<span class="codicon codicon-symbol-namespace symbol-workspace"></span>`)
+		case *typechecking.Stream:
+			sb.WriteString(`<span class="codicon codicon-remote symbol-stream"></span>`)
 		}
 		sb.WriteString(fmt.Sprintf(`%s</a>`, item.Object.ObjectName()))
 	}
@@ -423,6 +425,8 @@ func IsStructuralObject(object typechecking.Object) bool {
 	case *typechecking.Protocol:
 		return true
 	case *typechecking.Flagset:
+		return true
+	case *typechecking.Stream:
 		return true
 	default:
 		return false

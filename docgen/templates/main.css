@@ -1468,6 +1468,26 @@ html {
   color: #e93a9a;
 }
 
+.symbol-stream {
+  color: #b875dc;
+}
+
+.symbol-event {
+  color: #00d3b8;
+}
+
+.is-current .codicon {
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity));
+}
+
+@media (prefers-color-scheme: dark) {
+  .is-current .codicon {
+    --tw-text-opacity: 1;
+    color: rgb(255 255 255 / var(--tw-text-opacity));
+  }
+}
+
 :root {
   font-family: Inter, Sailec, sans-serif;
 }
@@ -1507,6 +1527,10 @@ ul .depth-spacer {
 
 ul ul .depth-spacer {
   padding-left: 2rem;
+}
+
+ul ul ul .depth-spacer {
+  padding-left: 3rem;
 }
 
 .depth-spacer .codicon-chevron-right {

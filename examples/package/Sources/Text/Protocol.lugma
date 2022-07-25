@@ -69,5 +69,9 @@ protocol TextProtocol {
 }
 
 stream Messages {
+    /** A message has been received */
     event messageReceived(inGuild: UInt64)
+
+    /** Sends a message to a guild */
+    signal sendMessage(toGuild: UInt64)
 }

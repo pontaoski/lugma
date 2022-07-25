@@ -42,6 +42,18 @@ html {
     color: #e93a9a;
 }
 
+.symbol-stream {
+    color: #b875dc;
+}
+
+.symbol-event {
+    color: #00d3b8;
+}
+
+.is-current .codicon {
+    @apply text-black dark:text-white;
+}
+
 :root {
     font-family: Inter, Sailec, sans-serif;
 }
@@ -61,6 +73,9 @@ ul .depth-spacer {
 }
 ul ul .depth-spacer {
     @apply pl-8;
+}
+ul ul ul .depth-spacer {
+    @apply pl-12;
 }
 
 .depth-spacer .codicon-chevron-right {
