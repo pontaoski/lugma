@@ -288,9 +288,18 @@ func (ctx *Context) doSingleModule(m *Module, w *Workspace, tree *ast.File) erro
 
 			p.Funcs = append(p.Funcs, f)
 		}
+
+		m.Protocols = append(m.Protocols, p)
+		ctx.Environment.Items[item.Name] = p
+	}
+	for _, item := range tree.Streams {
+		stream := &Stream{}
+		stream.object = newObject(item.Name, m.DefinedAt.Appended(item.Name), m, ctx.Environment)
+		stream.Documentation = item.Documentation
+
 		for _, ev := range item.Events {
 			e := &Event{}
-			e.object = newObject(ev.Name, p.Path().Appended(ev.Name), p, ctx.Environment)
+			e.object = newObject(ev.Name, stream.Path().Appended(ev.Name), stream, ctx.Environment)
 			e.Documentation = ev.Documentation
 
 			args, err := argList(ev.Arguments, e.Path(), e, ctx)
@@ -299,11 +308,11 @@ func (ctx *Context) doSingleModule(m *Module, w *Workspace, tree *ast.File) erro
 			}
 			e.Arguments = args
 
-			p.Events = append(p.Events, e)
+			stream.Events = append(stream.Events, e)
 		}
 		for _, sig := range item.Signals {
 			s := &Signal{}
-			s.object = newObject(sig.Name, p.Path().Appended(sig.Name), p, ctx.Environment)
+			s.object = newObject(sig.Name, stream.Path().Appended(sig.Name), stream, ctx.Environment)
 			s.Documentation = sig.Documentation
 
 			args, err := argList(sig.Arguments, s.Path(), s, ctx)
@@ -312,11 +321,11 @@ func (ctx *Context) doSingleModule(m *Module, w *Workspace, tree *ast.File) erro
 			}
 			s.Arguments = args
 
-			p.Signals = append(p.Signals, s)
+			stream.Signals = append(stream.Signals, s)
 		}
 
-		m.Protocols = append(m.Protocols, p)
-		ctx.Environment.Items[item.Name] = p
+		m.Streams = append(m.Streams, stream)
+		ctx.Environment.Items[item.Name] = stream
 	}
 
 	return nil

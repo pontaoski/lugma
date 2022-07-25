@@ -67,3 +67,7 @@ protocol TextProtocol {
     */
     func deleteChannel()
 }
+
+stream Messages {
+    event messageReceived(inGuild: UInt64)
+}

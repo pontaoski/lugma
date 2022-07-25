@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 
 	lugma "lugmac/parser"
 
@@ -21,6 +22,9 @@ type Workspace struct {
 	Workspace    *typechecking.Workspace
 	Module       *ModuleDefinition
 	KnownModules map[string]*typechecking.Module
+	Context      *typechecking.Context
+
+	once sync.Once
 }
 
 type ModuleDefinition struct {
@@ -64,7 +68,7 @@ func LoadWorkspaceFrom(dir string) (*Workspace, error) {
 		InEnv:     nil,
 
 		Modules: map[string]*typechecking.Module{},
-	}, mod, map[string]*typechecking.Module{}}, nil
+	}, mod, map[string]*typechecking.Module{}, nil, sync.Once{}}, nil
 }
 
 func (m *Workspace) ModuleFor(context *typechecking.Context, path string, from string) (*typechecking.Module, error) {
@@ -77,7 +81,10 @@ func (m *Workspace) ModuleFor(context *typechecking.Context, path string, from s
 }
 
 func (m *Workspace) GenerateModules() error {
-	ctx := typechecking.NewContext(m)
+	m.once.Do(func() {
+		m.Context = typechecking.NewContext(m)
+	})
+	ctx := m.Context
 
 	parser := sitter.NewParser()
 	parser.SetLanguage(lugma.GetLanguage())

@@ -172,28 +172,6 @@ func (j JSONSchemaBackend) Generate(mod *typechecking.Module, in *typechecking.C
 				"required":   required,
 			}
 		}
-		for _, ev := range protocol.Events {
-			props := map[string]AnyDict{}
-			required := []string{}
-
-			for _, item := range ev.Arguments {
-				props[item.Name] = j.JSONTypeOf(item.Type, mod.Path(), in)
-				switch props[item.Name]["type"].(type) {
-				case []string:
-					// do nothing
-				default:
-					required = append(required, item.Name)
-				}
-			}
-
-			loc := j.URLBase + ev.Path().ModulePath + ev.Path().InModulePath
-			schemas[loc] = AnyDict{
-				"$id":        loc,
-				"type":       "object",
-				"properties": props,
-				"required":   required,
-			}
-		}
 	}
 	for _, flagset := range mod.Flagsets {
 		loc := j.URLBase + flagset.Path().ModulePath + flagset.Path().InModulePath

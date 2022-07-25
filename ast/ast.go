@@ -23,6 +23,7 @@ func SpanFromNode(n *sitter.Node) Span {
 type File struct {
 	Imports   []Import
 	Protocols []Protocol
+	Streams   []Stream
 	Structs   []Struct
 	Enums     []Enum
 	Flagsets  []Flagset
@@ -123,6 +124,9 @@ func CombineFiles(files ...*File) *File {
 		for _, F := range file.Flagsets {
 			ret.Flagsets = append(ret.Flagsets, F)
 		}
+		for _, S := range file.Streams {
+			ret.Streams = append(ret.Streams, S)
+		}
 	}
 
 	return ret
@@ -146,6 +150,8 @@ func FileFromNode(n *sitter.Node, input []byte) File {
 			f.Structs = append(f.Structs, StructFromNode(child, input))
 		case "enum_declaration":
 			f.Enums = append(f.Enums, EnumFromNode(child, input))
+		case "stream_declaration":
+			f.Streams = append(f.Streams, StreamFromNode(child, input))
 		case "flagset_declaration":
 			f.Flagsets = append(f.Flagsets, FlagsetFromNode(child, input))
 		case "comment":
@@ -179,8 +185,6 @@ type Protocol struct {
 	Documentation *ItemDocumentation
 
 	Functions []Function
-	Events    []Event
-	Signals   []Signal
 	Span      Span
 }
 
@@ -195,10 +199,6 @@ func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
 		switch child.Type() {
 		case "func_declaration":
 			p.Functions = append(p.Functions, FunctionFromNode(child, input))
-		case "event_declaration":
-			p.Events = append(p.Events, EventFromNode(child, input))
-		case "signal_declaration":
-			p.Signals = append(p.Signals, SignalFromNode(child, input))
 		case "identifier", "comment":
 			continue
 		default:
@@ -206,6 +206,38 @@ func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
 		}
 	}
 	return p
+}
+
+type Stream struct {
+	Name          string
+	Documentation *ItemDocumentation
+
+	Events  []Event
+	Signals []Signal
+	Span    Span
+}
+
+func StreamFromNode(n *sitter.Node, input []byte) Stream {
+	var s Stream
+	s.Span = SpanFromNode(n)
+	s.Name = n.ChildByFieldName("name").Content(input)
+	s.Documentation = DocumentationFromNode(n, input)
+
+	for i := 0; i < int(n.NamedChildCount()); i++ {
+		child := n.NamedChild(i)
+		switch child.Type() {
+		case "event_declaration":
+			s.Events = append(s.Events, EventFromNode(child, input))
+		case "signal_declaration":
+			s.Signals = append(s.Signals, SignalFromNode(child, input))
+		case "identifier", "comment":
+			continue
+		default:
+			panic("Unhandled " + child.Type())
+		}
+	}
+
+	return s
 }
 
 type Function struct {

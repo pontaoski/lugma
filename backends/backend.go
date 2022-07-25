@@ -10,9 +10,16 @@ type Backend interface {
 
 var StandardFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:    "output",
-		Aliases: []string{"o"},
-		Usage:   "File to write output to. If not set, file will be written to stdout.",
+		Name:     "outdir",
+		Usage:    "The directory to output generated documentation to",
+		Required: true,
+		Aliases:  []string{"o"},
+	},
+	&cli.StringFlag{
+		Name:        "workspace",
+		Usage:       "The directory to load a workspace from",
+		DefaultText: ".",
+		Aliases:     []string{"w"},
 	},
 }
 

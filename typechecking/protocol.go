@@ -6,9 +6,7 @@ type Protocol struct {
 	object
 	Documentation *ast.ItemDocumentation
 
-	Funcs   []*Func
-	Events  []*Event
-	Signals []*Signal
+	Funcs []*Func
 }
 
 var _ Object = &Protocol{}
@@ -19,16 +17,6 @@ func (p Protocol) Child(name string) Object {
 	for _, fn := range p.Funcs {
 		if fn.ObjectName() == name {
 			return fn
-		}
-	}
-	for _, ev := range p.Events {
-		if ev.ObjectName() == name {
-			return ev
-		}
-	}
-	for _, sig := range p.Signals {
-		if sig.ObjectName() == name {
-			return sig
 		}
 	}
 	return nil

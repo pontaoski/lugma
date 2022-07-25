@@ -137,31 +137,21 @@ func DefaultStructureForEnum(enum *typechecking.Enum) Item {
 	}
 }
 
-func DefaultStructureForProtocol(protocol *typechecking.Protocol) Item {
-	var funcs []Item
+func DefaultStructureForStream(stream *typechecking.Stream) Item {
 	var events []Item
 	var signals []Item
 
-	for _, fn := range protocol.Funcs {
-		funcs = append(funcs, Item{Object: fn})
-	}
-	for _, ev := range protocol.Events {
+	for _, ev := range stream.Events {
 		events = append(events, Item{Object: ev})
 	}
-	for _, sig := range protocol.Signals {
+	for _, sig := range stream.Signals {
 		signals = append(signals, Item{Object: sig})
 	}
 
 	ret := Item{
-		Object: protocol,
+		Object: stream,
 	}
 
-	if len(funcs) > 0 {
-		ret.Children = append(ret.Children, Section{
-			Title: "Methods",
-			Items: funcs,
-		})
-	}
 	if len(events) > 0 {
 		ret.Children = append(ret.Children, Section{
 			Title: "Events",
@@ -172,6 +162,27 @@ func DefaultStructureForProtocol(protocol *typechecking.Protocol) Item {
 		ret.Children = append(ret.Children, Section{
 			Title: "Signals",
 			Items: signals,
+		})
+	}
+
+	return ret
+}
+
+func DefaultStructureForProtocol(protocol *typechecking.Protocol) Item {
+	var funcs []Item
+
+	for _, fn := range protocol.Funcs {
+		funcs = append(funcs, Item{Object: fn})
+	}
+
+	ret := Item{
+		Object: protocol,
+	}
+
+	if len(funcs) > 0 {
+		ret.Children = append(ret.Children, Section{
+			Title: "Methods",
+			Items: funcs,
 		})
 	}
 
@@ -392,6 +403,8 @@ func HTMLSignatureFor(object typechecking.Object, currently typechecking.Object)
 		return hcode(hkeyword("struct") + " " + hitem(object.ObjectName()))
 	case *typechecking.Protocol:
 		return hcode(hkeyword("protocol") + " " + hitem(object.ObjectName()))
+	case *typechecking.Stream:
+		return hcode(hkeyword("stream") + " " + hitem(object.ObjectName()))
 	case *typechecking.Enum:
 		return hcode(hkeyword("enum") + " " + hitem(object.ObjectName()))
 	default:
@@ -430,6 +443,8 @@ func DefaultStructureFor(object typechecking.Object) Item {
 		return DefaultStructureForFlagset(t)
 	case *typechecking.Workspace:
 		return DefaultStructureForWorkspace(t)
+	case *typechecking.Stream:
+		return DefaultStructureForStream(t)
 	default:
 		panic("bad item type")
 	}
@@ -467,6 +482,11 @@ func DefaultStructureForModule(m *typechecking.Module) Item {
 		flagsetSection.Items = append(flagsetSection.Items, itemOnly(StructureFor(flagset)))
 	}
 
+	streamsSection := Section{Title: "Streams"}
+	for _, stream := range m.Streams {
+		streamsSection.Items = append(flagsetSection.Items, itemOnly(StructureFor(stream)))
+	}
+
 	ret := Item{Object: m}
 
 	if len(structSection.Items) > 0 {
@@ -480,6 +500,9 @@ func DefaultStructureForModule(m *typechecking.Module) Item {
 	}
 	if len(flagsetSection.Items) > 0 {
 		ret.Children = append(ret.Children, flagsetSection)
+	}
+	if len(streamsSection.Items) > 0 {
+		ret.Children = append(ret.Children, streamsSection)
 	}
 
 	return ret

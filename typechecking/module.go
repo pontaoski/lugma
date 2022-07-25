@@ -37,6 +37,7 @@ type Module struct {
 	Structs   []*Struct
 	Enums     []*Enum
 	Protocols []*Protocol
+	Streams   []*Stream
 	Flagsets  []*Flagset
 }
 
@@ -74,6 +75,11 @@ func (m Module) Child(name string) Object {
 	for _, flagset := range m.Flagsets {
 		if flagset.ObjectName() == name {
 			return flagset
+		}
+	}
+	for _, stream := range m.Streams {
+		if stream.ObjectName() == name {
+			return stream
 		}
 	}
 	if v, ok := m.Imports[name]; ok {

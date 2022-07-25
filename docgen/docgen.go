@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"lugmac/ast"
 	"lugmac/ast/extension"
+	"lugmac/backends"
 	"lugmac/modules"
 	"lugmac/typechecking"
 	"os"
@@ -282,18 +283,7 @@ func renderObject(outdir string, workspace *typechecking.Workspace, item typeche
 var Command = &cli.Command{
 	Name:  "document",
 	Usage: "Generate documentation from Lugma IDL definitions",
-	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:     "outdir",
-			Usage:    "The directory to output generated documentation to",
-			Required: true,
-		},
-		&cli.StringFlag{
-			Name:        "workspace",
-			Usage:       "The directory to load a workspace from",
-			DefaultText: ".",
-		},
-	},
+	Flags: backends.StandardFlags,
 	Action: func(cCtx *cli.Context) error {
 		w, err := modules.LoadWorkspaceFrom(cCtx.String("workspace"))
 		if err != nil {
@@ -368,13 +358,16 @@ var Command = &cli.Command{
 						return err
 					}
 				}
-				for _, signal := range protocol.Signals {
+			}
+			for _, stream := range mod.Streams {
+				err = renderObject(outdir, mod.InWorkspace, stream, stream.Documentation)
+				for _, signal := range stream.Signals {
 					err = renderObject(outdir, mod.InWorkspace, signal, signal.Documentation)
 					if err != nil {
 						return err
 					}
 				}
-				for _, event := range protocol.Events {
+				for _, event := range stream.Events {
 					err = renderObject(outdir, mod.InWorkspace, event, event.Documentation)
 					if err != nil {
 						return err
