@@ -9,7 +9,6 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	_ "lugmac/backends/jsonschema"
 	_ "lugmac/backends/typescript"
 )
 
