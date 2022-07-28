@@ -346,17 +346,10 @@ var Command = &cli.Command{
 					}
 				}
 			}
-			for _, protocol := range mod.Protocols {
-				err = renderObject(outdir, mod.InWorkspace, protocol, protocol.Documentation)
+			for _, fn := range mod.Funcs {
+				err = renderObject(outdir, mod.InWorkspace, fn, fn.Documentation)
 				if err != nil {
 					return err
-				}
-
-				for _, fn := range protocol.Funcs {
-					err = renderObject(outdir, mod.InWorkspace, fn, fn.Documentation)
-					if err != nil {
-						return err
-					}
 				}
 			}
 			for _, stream := range mod.Streams {

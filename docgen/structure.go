@@ -71,8 +71,6 @@ func (item Item) renderTableOfContentsTo(sb *strings.Builder, currently typechec
 			sb.WriteString(`<span class="codicon codicon-symbol-enum symbol-enum"></span>`)
 		case *typechecking.Flag, *typechecking.Case:
 			sb.WriteString(`<span class="codicon codicon-symbol-enum-member symbol-enum-member"></span>`)
-		case *typechecking.Protocol:
-			sb.WriteString(`<span class="codicon codicon-symbol-class symbol-class"></span>`)
 		case *typechecking.Struct:
 			sb.WriteString(`<span class="codicon codicon-symbol-structure symbol-structure"></span>`)
 		case *typechecking.Event, *typechecking.Signal:
@@ -170,27 +168,6 @@ func DefaultStructureForStream(stream *typechecking.Stream) Item {
 	return ret
 }
 
-func DefaultStructureForProtocol(protocol *typechecking.Protocol) Item {
-	var funcs []Item
-
-	for _, fn := range protocol.Funcs {
-		funcs = append(funcs, Item{Object: fn})
-	}
-
-	ret := Item{
-		Object: protocol,
-	}
-
-	if len(funcs) > 0 {
-		ret.Children = append(ret.Children, Section{
-			Title: "Methods",
-			Items: funcs,
-		})
-	}
-
-	return ret
-}
-
 func DefaultStructureForFlagset(flagset *typechecking.Flagset) Item {
 	var flags []Item
 
@@ -223,8 +200,6 @@ func DocumentationItemFor(object typechecking.Object) *lugmaast.ItemDocumentatio
 	case *typechecking.Enum:
 		return t.Documentation
 	case *typechecking.Struct:
-		return t.Documentation
-	case *typechecking.Protocol:
 		return t.Documentation
 	case *typechecking.Flagset:
 		return t.Documentation
@@ -403,8 +378,6 @@ func HTMLSignatureFor(object typechecking.Object, currently typechecking.Object)
 		return hcode(hkeyword("let") + " " + fmt.Sprintf(`<span class="code-item-name">%s</span>: <span class="code-type">%s</span>`, t.Name, t.Type.String()))
 	case *typechecking.Struct:
 		return hcode(hkeyword("struct") + " " + hitem(object.ObjectName()))
-	case *typechecking.Protocol:
-		return hcode(hkeyword("protocol") + " " + hitem(object.ObjectName()))
 	case *typechecking.Stream:
 		return hcode(hkeyword("stream") + " " + hitem(object.ObjectName()))
 	case *typechecking.Enum:
@@ -421,8 +394,6 @@ func IsStructuralObject(object typechecking.Object) bool {
 	case *typechecking.Enum:
 		return true
 	case *typechecking.Struct:
-		return true
-	case *typechecking.Protocol:
 		return true
 	case *typechecking.Flagset:
 		return true
@@ -441,8 +412,8 @@ func DefaultStructureFor(object typechecking.Object) Item {
 		return DefaultStructureForEnum(t)
 	case *typechecking.Struct:
 		return DefaultStructureForStruct(t)
-	case *typechecking.Protocol:
-		return DefaultStructureForProtocol(t)
+	case *typechecking.Func:
+		return Item{object, nil}
 	case *typechecking.Flagset:
 		return DefaultStructureForFlagset(t)
 	case *typechecking.Workspace:
@@ -476,9 +447,9 @@ func DefaultStructureForModule(m *typechecking.Module) Item {
 		enumSection.Items = append(enumSection.Items, itemOnly(StructureFor(enum)))
 	}
 
-	protocolSection := Section{Title: "Protocols"}
-	for _, protocol := range m.Protocols {
-		protocolSection.Items = append(protocolSection.Items, itemOnly(StructureFor(protocol)))
+	functionsSection := Section{Title: "Functions"}
+	for _, fn := range m.Funcs {
+		functionsSection.Items = append(functionsSection.Items, itemOnly(StructureFor(fn)))
 	}
 
 	flagsetSection := Section{Title: "Flagsets"}
@@ -499,8 +470,8 @@ func DefaultStructureForModule(m *typechecking.Module) Item {
 	if len(enumSection.Items) > 0 {
 		ret.Children = append(ret.Children, enumSection)
 	}
-	if len(protocolSection.Items) > 0 {
-		ret.Children = append(ret.Children, protocolSection)
+	if len(functionsSection.Items) > 0 {
+		ret.Children = append(ret.Children, functionsSection)
 	}
 	if len(flagsetSection.Items) > 0 {
 		ret.Children = append(ret.Children, flagsetSection)

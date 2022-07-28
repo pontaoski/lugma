@@ -18,28 +18,21 @@ enum Error {
 
 /**
 
-  Eat the provided specialty sloth food. This is kinda gay, ngl.
+  Eat the provided specialty sloth food.
 
+  Sloths love to eat while they move very slowly through their rainforest
+  habitats. They are especially happy to consume leaves and twigs, which they
+  digest over long periods of time, mostly while they sleep.
+
+  When they eat food, a sloth's energy increases by the food's energy.
+
+  - Parameters:
+    - food: The food for the sloth to eat
+    - quantity: The quantity of the food for the sloth to eat
+
+  - Returns: The sloth's energy level after eating
+
+  - Throws: @Error.gay if the sloth is too gay to eat food.
+    Otherwise, nothing.
 */
-protocol Sloths {
-  /**
-
-    Eat the provided specialty sloth food.
-
-    Sloths love to eat while they move very slowly through their rainforest
-    habitats. They are especially happy to consume leaves and twigs, which they
-    digest over long periods of time, mostly while they sleep.
-
-    When they eat food, a sloth's energy increases by the food's energy.
-
-    - Parameters:
-      - food: The food for the sloth to eat
-      - quantity: The quantity of the food for the sloth to eat
-
-    - Returns: The sloth's energy level after eating
-
-    - Throws: @Error.gay if the sloth is too gay to eat food.
-      Otherwise, nothing.
-  */
-  func eat(food: Food, quantity: Int64) throws Error -> Int64
-}
+func eat(food: Food, quantity: Int64) throws Error -> Int64

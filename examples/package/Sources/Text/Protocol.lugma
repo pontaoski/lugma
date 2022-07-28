@@ -1,72 +1,45 @@
 import "Base" as Base
 
 /**
-    Main protocol for text communications in Harmony
-
-    # Topics
-
-    ## Chat Creation
-
-    - @createGuild
-    - @createRoom
-    - @createDM
-
-    ## Chat Deletion
-
-    - @deleteGuild
-
-    ## Channel Management
-
-    - @createChannel
-    - @getChannel
-    - @updateChannelInformation
-    - @updateChannelOrder
-    - @updateAllChannelOrder
-    - @deleteChannel
-
+    Creates a multi-channel guild
 */
-protocol TextProtocol {
-    /**
-        Creates a multi-channel guild
-    */
-    func createGuild(name: String)
-    /**
-        Creates a single-channel room
-    */
-    func createRoom(name: String)
-    /**
-        Creates a single-participant direct messaging room
-    */
-    func createDM(name: String)
-    /**
-        Deletes a guild
-    */
-    func deleteGuild(id: UInt64)
-    /**
-        Creates a new channel
-    */
-    func createChannel(inGuild: UInt64)
-    /**
-        Gets a channel's metadata
-    */
-    func getChannel(id: UInt64)
-    /**
-        Updates a channel's metadata
-    */
-    func updateChannelInformation()
-    /**
-        Moves a single channel in a guild's channel list
-    */
-    func updateChannelOrder()
-    /**
-        Rearranges all channels in a guild's channel list at once
-    */
-    func updateAllChannelOrder()
-    /**
-        Deletes a channel
-    */
-    func deleteChannel()
-}
+func createGuild(name: String)
+/**
+    Creates a single-channel room
+*/
+func createRoom(name: String)
+/**
+    Creates a single-participant direct messaging room
+*/
+func createDM(name: String)
+/**
+    Deletes a guild
+*/
+func deleteGuild(id: UInt64)
+/**
+    Creates a new channel
+*/
+func createChannel(inGuild: UInt64)
+/**
+    Gets a channel's metadata
+*/
+func getChannel(id: UInt64)
+/**
+    Updates a channel's metadata
+*/
+func updateChannelInformation()
+/**
+    Moves a single channel in a guild's channel list
+*/
+func updateChannelOrder()
+/**
+    Rearranges all channels in a guild's channel list at once
+*/
+func updateAllChannelOrder()
+/**
+    Deletes a channel
+*/
+func deleteChannel()
 
 stream Messages {
     /** A message has been received */

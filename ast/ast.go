@@ -21,13 +21,13 @@ func SpanFromNode(n *sitter.Node) Span {
 }
 
 type File struct {
-	Imports   []Import
-	Protocols []Protocol
-	Streams   []Stream
-	Structs   []Struct
-	Enums     []Enum
-	Flagsets  []Flagset
-	Span      Span
+	Imports  []Import
+	Funcs    []Function
+	Streams  []Stream
+	Structs  []Struct
+	Enums    []Enum
+	Flagsets []Flagset
+	Span     Span
 }
 
 var (
@@ -112,8 +112,8 @@ func CombineFiles(files ...*File) *File {
 		for _, I := range file.Imports {
 			ret.Imports = append(ret.Imports, I)
 		}
-		for _, P := range file.Protocols {
-			ret.Protocols = append(ret.Protocols, P)
+		for _, F := range file.Funcs {
+			ret.Funcs = append(ret.Funcs, F)
 		}
 		for _, S := range file.Structs {
 			ret.Structs = append(ret.Structs, S)
@@ -144,8 +144,8 @@ func FileFromNode(n *sitter.Node, input []byte) File {
 		switch child.Type() {
 		case "import":
 			f.Imports = append(f.Imports, ImportFromNode(child, input))
-		case "protocol_declaration":
-			f.Protocols = append(f.Protocols, ProtocolFromNode(child, input))
+		case "func_declaration":
+			f.Funcs = append(f.Funcs, FunctionFromNode(child, input))
 		case "struct_declaration":
 			f.Structs = append(f.Structs, StructFromNode(child, input))
 		case "enum_declaration":
@@ -178,34 +178,6 @@ func ImportFromNode(n *sitter.Node, input []byte) Import {
 	i.As = n.ChildByFieldName("alias").Content(input)
 
 	return i
-}
-
-type Protocol struct {
-	Name          string
-	Documentation *ItemDocumentation
-
-	Functions []Function
-	Span      Span
-}
-
-func ProtocolFromNode(n *sitter.Node, input []byte) Protocol {
-	var p Protocol
-	p.Span = SpanFromNode(n)
-	p.Name = n.ChildByFieldName("name").Content(input)
-	p.Documentation = DocumentationFromNode(n, input)
-
-	for i := 0; i < int(n.NamedChildCount()); i++ {
-		child := n.NamedChild(i)
-		switch child.Type() {
-		case "func_declaration":
-			p.Functions = append(p.Functions, FunctionFromNode(child, input))
-		case "identifier", "comment":
-			continue
-		default:
-			panic("Unhandled " + child.Type())
-		}
-	}
-	return p
 }
 
 type Stream struct {

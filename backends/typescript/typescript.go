@@ -242,79 +242,42 @@ func (ts TypescriptBackend) GenerateServer(mod *typechecking.Module, in *typeche
 		build.Add(`transport.bindStream('%s', (stream: Stream<T>) => slot(wrap%sFromStream(stream)))`, stream.Path().String(), stream.ObjectName())
 		build.AddD(`}`)
 	}
-	for _, protocol := range mod.Protocols {
-		build.AddI(`export interface %s<T> {`, protocol.ObjectName())
 
-		for _, fn := range protocol.Funcs {
-			build.AddE(`%s(`, fn.ObjectName())
-			for _, arg := range fn.Arguments {
-				build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
-				build.AddK(`, `)
-			}
-			build.AddK(`extra: T`)
-			build.AddK(`)`)
-
-			ret := "void"
-			if fn.Returns != nil {
-				ret = ts.TSTypeOf(fn.Returns, mod.Path(), in)
-			}
-			fai := "void"
-			if fn.Throws != nil {
-				ret = ts.TSTypeOf(fn.Throws, mod.Path(), in)
-			}
-
-			build.AddK(`: Promise<Result<%s, %s>>`, ret, fai)
-
-			build.AddNL()
+	build.AddI(`export interface Server<T> {`)
+	for _, fn := range mod.Funcs {
+		build.AddE(`%s(`, fn.ObjectName())
+		for _, arg := range fn.Arguments {
+			build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
+			build.AddK(`, `)
 		}
-		build.AddD(`}`)
+		build.AddK(`extra: T`)
+		build.AddK(`)`)
 
-		build.AddI(`export function bind%sToTransport<T>(impl: %s<T>, transport: Transport<T>) {`, protocol.ObjectName(), protocol.ObjectName())
-		for _, fn := range protocol.Funcs {
-			build.AddE(`transport.bindMethod("%s", (content: any, extra: T | undefined) => impl.%s(`, fn.Path().String(), fn.ObjectName())
-			for _, arg := range fn.Arguments {
-				build.AddK(`content['%s'], `, arg.ObjectName())
-			}
-			build.AddK(`extra))`)
-			build.AddNL()
+		ret := "void"
+		if fn.Returns != nil {
+			ret = ts.TSTypeOf(fn.Returns, mod.Path(), in)
 		}
-		// build.AddI(`return {`)
-		// for _, fn := range protocol.Funcs {
-		// 	build.AddE(`async %s(`, fn.ObjectName())
-		// 	for _, arg := range fn.Arguments {
-		// 		build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
-		// 		build.AddK(`, `)
-		// 	}
-		// 	build.AddK(`extra: T`)
-		// 	build.AddK(`)`)
+		fai := "void"
+		if fn.Throws != nil {
+			ret = ts.TSTypeOf(fn.Throws, mod.Path(), in)
+		}
 
-		// 	if fn.Returns != nil {
-		// 		build.AddK(`: Promise<%s>`, ts.TSTypeOf(fn.Returns, mod.Path(), in))
-		// 	} else {
-		// 		build.AddK(`: Promise<void>`)
-		// 	}
+		build.AddK(`: Promise<Result<%s, %s>>`, ret, fai)
 
-		// 	build.AddK(` {`)
-
-		// 	build.AddNL()
-		// 	build.Einzug++
-
-		// 	build.AddI(`return await transport.makeRequest(`)
-		// 	build.Add(`"%s",`, fn.Path())
-		// 	build.AddI(`{`)
-		// 	for _, arg := range fn.Arguments {
-		// 		build.Add(`%s: %s,`, arg.ObjectName(), arg.ObjectName())
-		// 	}
-		// 	build.AddD(`},`)
-		// 	build.Add(`extra,`)
-		// 	build.AddD(`)`)
-
-		// 	build.AddD(`},`)
-		// }
-
-		// build.AddD(`}`)
-		build.AddD(`}`)
+		build.AddNL()
 	}
+	build.AddD(`}`)
+
+	build.AddI(`export function bindServerToTransport<T>(impl: Server<T>, transport: Transport<T>) {`)
+	for _, fn := range mod.Funcs {
+		build.AddE(`transport.bindMethod("%s", (content: any, extra: T | undefined) => impl.%s(`, fn.Path().String(), fn.ObjectName())
+		for _, arg := range fn.Arguments {
+			build.AddK(`content['%s'], `, arg.ObjectName())
+		}
+		build.AddK(`extra))`)
+		build.AddNL()
+	}
+	build.AddD(`}`)
 
 	return build.String(), nil
 }
@@ -387,64 +350,63 @@ func (ts TypescriptBackend) GenerateClient(mod *typechecking.Module, in *typeche
 		}
 		build.AddD(`}`)
 	}
-	for _, protocol := range mod.Protocols {
-		build.AddI(`export interface %s<T> {`, protocol.ObjectName())
 
-		for _, fn := range protocol.Funcs {
-			build.AddE(`%s(`, fn.ObjectName())
-			for _, arg := range fn.Arguments {
-				build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
-				build.AddK(`, `)
-			}
-			build.AddK(`extra: T`)
-			build.AddK(`)`)
-			if fn.Returns != nil {
-				build.AddK(`: Promise<%s>`, ts.TSTypeOf(fn.Returns, mod.Path(), in))
-			} else {
-				build.AddK(`: Promise<void>`)
-			}
-			build.AddNL()
+	build.AddI(`export interface Client<T> {`)
+
+	for _, fn := range mod.Funcs {
+		build.AddE(`%s(`, fn.ObjectName())
+		for _, arg := range fn.Arguments {
+			build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
+			build.AddK(`, `)
 		}
-		build.AddD(`}`)
-
-		build.AddI(`export function make%sFromTransport<T>(transport: Transport<T>): %s<T> {`, protocol.ObjectName(), protocol.ObjectName())
-		build.AddI(`return {`)
-		for _, fn := range protocol.Funcs {
-			build.AddE(`async %s(`, fn.ObjectName())
-			for _, arg := range fn.Arguments {
-				build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
-				build.AddK(`, `)
-			}
-			build.AddK(`extra: T`)
-			build.AddK(`)`)
-
-			if fn.Returns != nil {
-				build.AddK(`: Promise<%s>`, ts.TSTypeOf(fn.Returns, mod.Path(), in))
-			} else {
-				build.AddK(`: Promise<void>`)
-			}
-
-			build.AddK(` {`)
-
-			build.AddNL()
-			build.Einzug++
-
-			build.AddI(`return await transport.makeRequest(`)
-			build.Add(`"%s",`, fn.Path())
-			build.AddI(`{`)
-			for _, arg := range fn.Arguments {
-				build.Add(`%s: %s,`, arg.ObjectName(), arg.ObjectName())
-			}
-			build.AddD(`},`)
-			build.Add(`extra,`)
-			build.AddD(`)`)
-
-			build.AddD(`},`)
+		build.AddK(`extra: T`)
+		build.AddK(`)`)
+		if fn.Returns != nil {
+			build.AddK(`: Promise<%s>`, ts.TSTypeOf(fn.Returns, mod.Path(), in))
+		} else {
+			build.AddK(`: Promise<void>`)
 		}
-
-		build.AddD(`}`)
-		build.AddD(`}`)
+		build.AddNL()
 	}
+	build.AddD(`}`)
+
+	build.AddI(`export function makeClientFromTransport<T>(transport: Transport<T>): Client<T> {`)
+	build.AddI(`return {`)
+	for _, fn := range mod.Funcs {
+		build.AddE(`async %s(`, fn.ObjectName())
+		for _, arg := range fn.Arguments {
+			build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
+			build.AddK(`, `)
+		}
+		build.AddK(`extra: T`)
+		build.AddK(`)`)
+
+		if fn.Returns != nil {
+			build.AddK(`: Promise<%s>`, ts.TSTypeOf(fn.Returns, mod.Path(), in))
+		} else {
+			build.AddK(`: Promise<void>`)
+		}
+
+		build.AddK(` {`)
+
+		build.AddNL()
+		build.Einzug++
+
+		build.AddI(`return await transport.makeRequest(`)
+		build.Add(`"%s",`, fn.Path())
+		build.AddI(`{`)
+		for _, arg := range fn.Arguments {
+			build.Add(`%s: %s,`, arg.ObjectName(), arg.ObjectName())
+		}
+		build.AddD(`},`)
+		build.Add(`extra,`)
+		build.AddD(`)`)
+
+		build.AddD(`},`)
+	}
+
+	build.AddD(`}`)
+	build.AddD(`}`)
 
 	return build.String(), nil
 }

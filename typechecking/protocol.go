@@ -2,26 +2,6 @@ package typechecking
 
 import "lugmac/ast"
 
-type Protocol struct {
-	object
-	Documentation *ast.ItemDocumentation
-
-	Funcs []*Func
-}
-
-var _ Object = &Protocol{}
-
-func (p Protocol) isObject() {}
-
-func (p Protocol) Child(name string) Object {
-	for _, fn := range p.Funcs {
-		if fn.ObjectName() == name {
-			return fn
-		}
-	}
-	return nil
-}
-
 type Func struct {
 	object
 	Documentation *ast.ItemDocumentation

@@ -34,11 +34,11 @@ type Module struct {
 
 	Imports map[string]*Module
 
-	Structs   []*Struct
-	Enums     []*Enum
-	Protocols []*Protocol
-	Streams   []*Stream
-	Flagsets  []*Flagset
+	Structs  []*Struct
+	Enums    []*Enum
+	Funcs    []*Func
+	Streams  []*Stream
+	Flagsets []*Flagset
 }
 
 var _ Object = Module{}
@@ -67,9 +67,9 @@ func (m Module) Child(name string) Object {
 			return enum
 		}
 	}
-	for _, protocol := range m.Protocols {
-		if protocol.ObjectName() == name {
-			return protocol
+	for _, fn := range m.Funcs {
+		if fn.ObjectName() == name {
+			return fn
 		}
 	}
 	for _, flagset := range m.Flagsets {

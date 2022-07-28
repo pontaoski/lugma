@@ -10,7 +10,7 @@ type Stream struct {
 	Signals []*Signal
 }
 
-var _ Object = &Protocol{}
+var _ Object = &Stream{}
 
 func (p Stream) isObject() {}
 

@@ -262,35 +262,27 @@ func (ctx *Context) doSingleModule(m *Module, w *Workspace, tree *ast.File) erro
 		m.Flagsets = append(m.Flagsets, fs)
 		ctx.Environment.Items[item.Name] = fs
 	}
-	for _, item := range tree.Protocols {
-		p := &Protocol{}
-		p.object = newObject(item.Name, m.DefinedAt.Appended(item.Name), m, ctx.Environment)
-		p.Documentation = item.Documentation
+	for _, item := range tree.Funcs {
+		f := &Func{}
+		f.object = newObject(item.Name, m.DefinedAt.Appended(item.Name), m, ctx.Environment)
+		f.Documentation = item.Documentation
 
-		for _, fn := range item.Functions {
-			f := &Func{}
-			f.object = newObject(fn.Name, p.Path().Appended(fn.Name), p, ctx.Environment)
-			f.Documentation = fn.Documentation
-
-			args, err := argList(fn.Arguments, f.Path(), f, ctx)
-			if err != nil {
-				return err
-			}
-			f.Arguments = args
-			f.Returns, err = lookupType(fn.Returns, ctx)
-			if err != nil {
-				return err
-			}
-			f.Throws, err = lookupType(fn.Throws, ctx)
-			if err != nil {
-				return err
-			}
-
-			p.Funcs = append(p.Funcs, f)
+		args, err := argList(item.Arguments, f.Path(), f, ctx)
+		if err != nil {
+			return err
+		}
+		f.Arguments = args
+		f.Returns, err = lookupType(item.Returns, ctx)
+		if err != nil {
+			return err
+		}
+		f.Throws, err = lookupType(item.Throws, ctx)
+		if err != nil {
+			return err
 		}
 
-		m.Protocols = append(m.Protocols, p)
-		ctx.Environment.Items[item.Name] = p
+		m.Funcs = append(m.Funcs, f)
+		ctx.Environment.Items[item.Name] = f
 	}
 	for _, item := range tree.Streams {
 		stream := &Stream{}
