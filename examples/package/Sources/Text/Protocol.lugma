@@ -41,6 +41,10 @@ func updateAllChannelOrder()
 */
 func deleteChannel()
 
+struct Message {
+    let text: String
+}
+
 stream Messages {
     /** A message has been received */
     event messageReceived(inGuild: UInt64)

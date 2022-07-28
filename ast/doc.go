@@ -119,8 +119,5 @@ func FromDocumentationComment(comment string, isMethod bool) *ItemDocumentation 
 		}
 	}
 
-	var s strings.Builder
-	gm.Renderer().Render(&s, source, doc.Summary)
-
 	return &doc
 }

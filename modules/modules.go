@@ -112,9 +112,18 @@ func (m *Workspace) GenerateModules() error {
 			astFiles = append(astFiles, &fileAST)
 		}
 
+		docs, err := ioutil.ReadFile(path.Join(m.Dir, "Sources", product.Name, "Docs.md"))
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
 		module, err := ctx.MultiFileModule(astFiles, m.Workspace, m.Workspace.Name+"/"+product.Name)
 		if err != nil {
 			return err
+		}
+
+		if len(docs) > 0 {
+			module.Documentation = ast.FromDocumentationComment(string(docs), false)
 		}
 
 		m.Workspace.Modules[product.Name] = module

@@ -180,6 +180,9 @@ func renderObject(outdir string, workspace *typechecking.Workspace, item typeche
 		var mainBuilder strings.Builder
 
 		rend := func(t gmast.Node) error {
+			if t == nil {
+				return nil
+			}
 			return gm.Renderer().Render(&mainBuilder, docs.Source, t)
 		}
 
@@ -306,6 +309,11 @@ var Command = &cli.Command{
 
 		for _, prod := range w.Module.Products {
 			mod := w.KnownModules[prod.Name]
+
+			err = renderObject(outdir, mod.InWorkspace, mod, mod.Documentation)
+			if err != nil {
+				return err
+			}
 
 			for _, flagset := range mod.Flagsets {
 				err = renderObject(outdir, mod.InWorkspace, flagset, flagset.Documentation)

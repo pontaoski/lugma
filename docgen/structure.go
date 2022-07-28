@@ -209,6 +209,10 @@ func DocumentationItemFor(object typechecking.Object) *lugmaast.ItemDocumentatio
 		return t.Documentation
 	case *typechecking.Event:
 		return t.Documentation
+	case *typechecking.Module:
+		return t.Documentation
+	case *typechecking.Stream:
+		return t.Documentation
 	default:
 		return nil
 	}
@@ -298,9 +302,7 @@ func getItemsFromStructuralList(object typechecking.Object, s *StructuralList) [
 		if e == nil {
 			continue
 		}
-		ret = append(ret, Item{
-			Object: e,
-		})
+		ret = append(ret, itemOnly(StructureFor(e)))
 	}
 	return ret
 }
@@ -382,6 +384,8 @@ func HTMLSignatureFor(object typechecking.Object, currently typechecking.Object)
 		return hcode(hkeyword("stream") + " " + hitem(object.ObjectName()))
 	case *typechecking.Enum:
 		return hcode(hkeyword("enum") + " " + hitem(object.ObjectName()))
+	case *typechecking.Module:
+		return hcode(hkeyword("module") + " " + hitem(object.ObjectName()))
 	default:
 		panic("bad object type " + reflect.TypeOf(object).String())
 	}
@@ -428,7 +432,7 @@ func DefaultStructureFor(object typechecking.Object) Item {
 func DefaultStructureForWorkspace(m *typechecking.Workspace) Item {
 	moduleSection := Section{Title: "Modules"}
 	for _, mod := range m.Modules {
-		moduleSection.Items = append(moduleSection.Items, DefaultStructureForModule(mod))
+		moduleSection.Items = append(moduleSection.Items, itemOnly(StructureFor(mod)))
 	}
 	return Item{
 		Object:   m,

@@ -1,5 +1,7 @@
 package typechecking
 
+import "lugmac/ast"
+
 type Workspace struct {
 	Name      string
 	DefinedAt Path
@@ -27,10 +29,11 @@ func (*Workspace) isObject() {
 }
 
 type Module struct {
-	Name        string
-	DefinedAt   Path
-	InEnv       *Environment
-	InWorkspace *Workspace
+	Name          string
+	DefinedAt     Path
+	InEnv         *Environment
+	InWorkspace   *Workspace
+	Documentation *ast.ItemDocumentation
 
 	Imports map[string]*Module
 
