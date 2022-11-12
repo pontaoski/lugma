@@ -187,7 +187,7 @@ func (ts TypescriptBackend) GenerateTypes(mod *typechecking.Module, in *typechec
 func (ts TypescriptBackend) GenerateServer(mod *typechecking.Module, in *typechecking.Context) (string, error) {
 	build := backends.Filebuilder{}
 
-	build.Add(`import { Result, Transport, Stream } from 'lugma-server-helpers'`)
+	build.Add(`import { Result, Transport, Stream } from '@lugma/server-helpers'`)
 	build.Add(`import { %s } from './%s.types'`, strings.Join(allNames(mod), ", "), mod.Name)
 	build.Add(`export * from './%s.types'`, mod.Name)
 
@@ -250,7 +250,7 @@ func (ts TypescriptBackend) GenerateServer(mod *typechecking.Module, in *typeche
 			build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
 			build.AddK(`, `)
 		}
-		build.AddK(`extra: T`)
+		build.AddK(`extra: T | undefined`)
 		build.AddK(`)`)
 
 		ret := "void"
@@ -299,7 +299,7 @@ func allNames(mod *typechecking.Module) []string {
 func (ts TypescriptBackend) GenerateClient(mod *typechecking.Module, in *typechecking.Context) (string, error) {
 	build := backends.Filebuilder{}
 
-	build.Add(`import { Transport, Stream } from 'lugma-web-helpers'`)
+	build.Add(`import { Transport, Stream } from '@lugma/web-helpers'`)
 	build.Add(`import { %s } from './%s.types'`, strings.Join(allNames(mod), ", "), mod.Name)
 	build.Add(`export * from './%s.types'`, mod.Name)
 
@@ -359,7 +359,7 @@ func (ts TypescriptBackend) GenerateClient(mod *typechecking.Module, in *typeche
 			build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
 			build.AddK(`, `)
 		}
-		build.AddK(`extra: T`)
+		build.AddK(`extra: T | undefined`)
 		build.AddK(`)`)
 		if fn.Returns != nil {
 			build.AddK(`: Promise<%s>`, ts.TSTypeOf(fn.Returns, mod.Path(), in))
@@ -378,7 +378,7 @@ func (ts TypescriptBackend) GenerateClient(mod *typechecking.Module, in *typeche
 			build.AddK(`%s: %s`, arg.ObjectName(), ts.TSTypeOf(arg.Type, mod.Path(), in))
 			build.AddK(`, `)
 		}
-		build.AddK(`extra: T`)
+		build.AddK(`extra: T | undefined`)
 		build.AddK(`)`)
 
 		if fn.Returns != nil {

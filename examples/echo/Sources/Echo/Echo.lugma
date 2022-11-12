@@ -1,0 +1,10 @@
+func echo(msg: Message) -> Message
+
+struct Message {
+    let text: String
+}
+
+stream TestStream {
+    event serverToClient(msg: Message)
+    signal clientToServer(msg: Message)
+}
