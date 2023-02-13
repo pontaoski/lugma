@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../Lugma.NET/Lugma.NET.csproj" />
+    <PackageReference Include="System.Text.Json" Version="7.0.0" />
+    <PackageReference Include="Websocket.Client" Version="4.4.43" />
   </ItemGroup>
 
 </Project>

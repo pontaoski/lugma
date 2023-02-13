@@ -1,10 +1,10 @@
-import { Stream, Transport, Result } from "lugma-server-helpers"
+import { Stream, Transport, Result, Metadata } from "lugma-server-helpers"
 import * as Express from "express"
 import * as HTTP from "http"
 import * as WebSockets from "ws"
 import * as ExpressWebsockets from "express-ws"
 
-export class WebSocketStream implements Stream<HTTP.IncomingHttpHeaders> {
+export class WebSocketStream implements Stream {
     socket: WebSockets.WebSocket
     callbacks: Map<number, (body: any) => void>
     eventsToNumbers: Map<string, Set<number>>
@@ -29,7 +29,7 @@ export class WebSocketStream implements Stream<HTTP.IncomingHttpHeaders> {
             }
         })
         let initialPayload: any | null = null
-        this.socket.addEventListener("message", (msg) => {
+        this.socket.addEventListener("message", (msg: any) => {
             if (typeof msg.data === "string") {
                 if (initialPayload === null) {
                     initialPayload = JSON.parse(msg.data)
@@ -88,7 +88,7 @@ export class WebSocketStream implements Stream<HTTP.IncomingHttpHeaders> {
 
         return this.callbackNumber
     }
-    onOpen(callback: (initialPayload: any) => void): number {
+    onOpen(callback: (initialPayload: Metadata) => void): number {
         this.callbackNumber++
         this.callbacks.set(this.callbackNumber, callback)
 
@@ -107,7 +107,7 @@ export class WebSocketStream implements Stream<HTTP.IncomingHttpHeaders> {
     }
 }
 
-export class ExpressTransport implements Transport<HTTP.IncomingHttpHeaders> {
+export class ExpressTransport implements Transport {
     router: Express.Application
     websocket: ExpressWebsockets.Instance
 
@@ -116,9 +116,15 @@ export class ExpressTransport implements Transport<HTTP.IncomingHttpHeaders> {
         this.router.use(Express.json())
         this.websocket = ExpressWebsockets.default(this.router, undefined, { leaveRouterUntouched: true })
     }
-    bindMethod(path: string, slot: (content: any, extra: any) => Promise<Result<any, any>>): void {
+    bindMethod(path: string, slot: (content: any, metadata: Metadata) => Promise<Result<any, any>>): void {
         this.router.post(path, async (request, response) => {
-            const [kind, ret] = await slot(request.body, request.headers)
+            const metadata: Metadata = {}
+            for (const key in request.headers) {
+                if (key.startsWith("lugma-")) {
+                    metadata[key.slice("lugma-".length)] = request.headers
+                }
+            }
+            const [kind, ret] = await slot(request.body, metadata)
 
             if (kind == "error") {
                 response.status(400).json(ret)

@@ -5,7 +5,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-public class HTTPSTransport : ITransport<HttpHeaders>
+public class HTTPSTransport : ITransport
 {
     private Uri BaseURI;
     private HttpClient Client;
@@ -15,15 +15,14 @@ public class HTTPSTransport : ITransport<HttpHeaders>
         Client = new HttpClient();
     }
     public async Task<TReturn> MakeRequest<TRequest, TReturn, TError>(
-        string endpoint, TRequest body, HttpHeaders? extra)
+        string endpoint, TRequest body, Metadata metadata)
     {
         var path = new Uri(BaseURI, endpoint);
 
         var content = JsonContent.Create(body);
         content.Headers.Add("Content-Type", "application/json");
-        if (extra is HttpHeaders headers)
-            foreach (var item in headers)
-                content.Headers.Add(item.Key, item.Value);
+        foreach (var item in metadata)
+            content.Headers.Add($"lugma-{item.Key}", item.Value);
 
         var response = await Client.PostAsync(path, content);
         if (response.StatusCode == HttpStatusCode.OK)
@@ -36,7 +35,7 @@ public class HTTPSTransport : ITransport<HttpHeaders>
             throw new RPCError<TError>(err!);
         }
     }
-    public async Task<IStream<HttpHeaders>> OpenStream(string endpoint, HttpHeaders? extra)
+    public async Task<IStream> OpenStream(string endpoint, Metadata extra)
     {
         var path = new Uri(BaseURI, endpoint);
     }

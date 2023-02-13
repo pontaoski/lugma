@@ -1,6 +1,6 @@
 namespace Lugma.Client;
 
-public interface IStream<TExtra>
+public interface IStream : IDisposable
 {
     void Unsubscribe(int handlerNumber);
     int Subscribe<TRecv>(string evt, Action<TRecv> callback);

@@ -1,6 +1,10 @@
-export interface Transport<T> {
-    makeRequest(endpoint: string, body: any, extra: T | undefined): Promise<any>
-    openStream(endpoint: string, extra: T | undefined): Stream
+export interface Metadata {
+    [key: string]: string
+}
+
+export interface Transport {
+    makeRequest(endpoint: string, body: any, metadata: Metadata): Promise<any>
+    openStream(endpoint: string, metadata: Metadata): Stream
 }
 export interface Stream {
     unon(item: number): void
@@ -16,7 +20,7 @@ export class WebSocketStream implements Stream {
     numbersToEvents: Map<number, string>
     callbackNumber: number
 
-    constructor(url: URL, initialPayload: any) {
+    constructor(url: URL, initialPayload: Metadata) {
         this.socket = new WebSocket(url)
         this.socket.binaryType = "arraybuffer"
         this.callbacks = new Map()
@@ -92,20 +96,20 @@ export class WebSocketStream implements Stream {
         }))
     }
 }
-export class HTTPSTransport implements Transport<Headers> {
+export class HTTPSTransport implements Transport {
     baseURL: URL
 
     constructor(baseURL: URL) {
         this.baseURL = baseURL
     }
-    async makeRequest(endpoint: string, body: any, extra: Headers | undefined = undefined): Promise<any> {
+    async makeRequest(endpoint: string, body: any, metadata: Metadata): Promise<any> {
         const path = new URL(endpoint, this.baseURL)
         const headers: {[key: string]: string} = {
             'Content-Type': 'application/json'
         }
-        extra?.forEach((val, key) => {
-            headers[key] = val
-        })
+        for (const key in metadata) {
+            headers[`lugma-${key}`] = metadata[key]
+        }
         const response = await fetch(path.toString(), {
             method: 'POST',
             body: JSON.stringify(body),
@@ -118,14 +122,9 @@ export class HTTPSTransport implements Transport<Headers> {
             throw json
         }
     }
-    openStream(endpoint: string, extra: Headers | undefined): Stream {
+    openStream(endpoint: string, metadata: Metadata): Stream {
         const path = new URL(endpoint, this.baseURL)
 
-        const headers: {[key: string]: string} = {}
-        extra?.forEach((val, key) => {
-            headers[key] = val
-        })
-
-        return new WebSocketStream(path, headers)
+        return new WebSocketStream(path, metadata)
     }
 }
