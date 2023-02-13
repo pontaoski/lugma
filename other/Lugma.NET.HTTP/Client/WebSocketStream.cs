@@ -15,7 +15,7 @@ public class WebSocketStream : IStream
     private Dictionary<int, string> NumbersToEvents;
     private int CallbackNumber;
 
-    internal WebSocketStream(Uri url, object initialPayload)
+    internal WebSocketStream(Uri url, Metadata initialPayload)
     {
         WebSocket = new(url);
         WebSocket.IsReconnectionEnabled = false;

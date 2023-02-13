@@ -38,5 +38,7 @@ public class HTTPSTransport : ITransport
     public async Task<IStream> OpenStream(string endpoint, Metadata extra)
     {
         var path = new Uri(BaseURI, endpoint);
+
+        return new WebSocketStream(path, extra);
     }
 }
